@@ -449,11 +449,11 @@ export class ZKPassportHelper {
   }
 
   private static extractCommitments(
-    proofData: any, 
+    proofData: { proof: string[], publicInputs: string[] }, 
     circuitType: CircuitType, 
     proofName?: string
   ): { publicInputs: bigint[], commitments: bigint[] } {
-    const publicInputs = proofData.publicInputs
+    const publicInputs = this.proofToBigIntArray(proofData.publicInputs)
     console.log("Public inputs: for proof", proofName, publicInputs)
 
     let commitments: bigint[] = []

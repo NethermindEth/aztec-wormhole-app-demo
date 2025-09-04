@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     try {
       const requestData = await request.json();
       verificationData = Object.keys(requestData).length > 0 ? requestData : {};
-    } catch (e) {
+    } catch {
       verificationData = {};
     }
     

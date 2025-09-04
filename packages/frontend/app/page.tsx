@@ -2,13 +2,13 @@
 import { useEffect, useRef, useState } from "react"
 import { ZKPassport, type ProofResult, EU_COUNTRIES, type QueryResult, type QueryResultErrors } from "@zkpassport/sdk"
 import QRCode from "react-qr-code"
-import { ZKPassportHelper } from "./ZKPassportHelper" // Adjust the import path as needed
+import { ZKPassportHelper, type ContractProofData } from "./ZKPassportHelper" // Adjust the import path as needed
 
 export default function Home() {
   // Only keep essential state variables
   const [message, setMessage] = useState("")
   const [queryUrl, setQueryUrl] = useState("")
-  const [formattedProofs, setFormattedProofs] = useState<any>(null) // Store formatted proofs
+  const [formattedProofs, setFormattedProofs] = useState<ContractProofData | null>(null) // Store formatted proofs
   const [donationAmount, setDonationAmount] = useState<number | "">("")  // No default amount - user must enter
   const [submittedAmount, setSubmittedAmount] = useState<number | null>(null) // Track the actually submitted amount
   
@@ -130,7 +130,7 @@ export default function Home() {
       })
 
       // Handle query results and format proofs
-      onResult(async (resultData: any) => {
+      onResult(async (resultData: { result: QueryResult, uniqueIdentifier: string | undefined, verified: boolean, queryResultErrors?: QueryResultErrors } & Record<string, unknown>) => {
         const { 
           result, 
           uniqueIdentifier, 
@@ -145,14 +145,14 @@ export default function Home() {
         console.log("Unique identifier:", uniqueIdentifier)
         
         // Try to find proofs in different possible locations
-        let proofs = resultData.proofs || resultData.proof || resultData.proofResults || null;
+        let proofs: ProofResult[] | null = (resultData.proofs as ProofResult[]) || (resultData.proof as ProofResult[]) || (resultData.proofResults as ProofResult[]) || null;
         console.log("Raw proofs received:", proofs)
         console.log("Proofs type:", typeof proofs)
         
         // If proofs is not directly available, use the collected proofs from onProofGenerated
         if (!proofs && collectedProofsRef.current.length > 0) {
           proofs = collectedProofsRef.current;
-          console.log("Using collected proofs from onProofGenerated:", proofs.length, "proofs")
+          console.log("Using collected proofs from onProofGenerated:", (proofs as ProofResult[]).length, "proofs")
         }
 
         // Extract data from results (only for sending to API, not for display)
@@ -169,10 +169,10 @@ export default function Home() {
         
         // Format proofs using ZKPassportHelper
         let contractProofData = null
-        if (proofs && proofs.length > 0) {
+        if (proofs && Array.isArray(proofs) && proofs.length > 0) {
           console.log("Formatting proofs for contract...")
           console.log("Number of proofs to format:", proofs.length)
-          console.log("Proof names:", proofs.map((p: ProofResult) => p.name))
+          console.log("Proof names:", proofs.map((p) => p.name))
           
           try {
             contractProofData = await ZKPassportHelper.formatProofsForContract(proofs)
@@ -609,7 +609,7 @@ export default function Home() {
                     {submittedAmount === receivedDonation ? (
                       <p className="text-xs text-green-600 mt-2 text-center">✅ Donation amount verified!</p>
                     ) : (
-                      <p className="text-xs text-red-600 mt-2 text-center">⚠️ Amounts don't match (Expected: {submittedAmount}, Got: {receivedDonation})</p>
+                      <p className="text-xs text-red-600 mt-2 text-center">⚠️ Amounts don&apos;t match (Expected: {submittedAmount}, Got: {receivedDonation})</p>
                     )}
                   </div>
                   
