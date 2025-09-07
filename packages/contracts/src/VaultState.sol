@@ -1,18 +1,13 @@
 // contracts/State.sol
 // SPDX-License-Identifier: Apache 2
 
-pragma solidity ^0.8.0;
-
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "../Interfaces/IDonation.sol";
+pragma solidity ^0.8.20;
 
 /**
  * @title VaultStorage
  * @dev Defines the core storage structure for the Vault contract system
  */
 contract VaultStorage {
-    address donationContract;
-
     struct Provider {
         uint16 chainId;
         uint16 governanceChainId;
@@ -21,15 +16,12 @@ contract VaultStorage {
     }
 
     struct State {
-        address wormhole;
+        address wormholeAddr;
         
         Provider provider;
 
-        // Only keep the mappings you actually use
-        mapping(address => bool) initializedImplementations;
-        
-        // Keep this for VAA verification
-        mapping(uint16 => bytes32) vaultImplementations;
+        // Registered emitter addresses for cross-chain verification
+        mapping(uint16 => bytes32) registeredEmitters;
         
         // EIP-155 Chain ID
         uint256 evmChainId;
@@ -37,7 +29,7 @@ contract VaultStorage {
         // Store Aztec TxID -> amount mapping
         mapping(bytes32 => uint256) arbitrumMessages;
 
-        address donationContract;
+        address donationContractAddr;
     }
 }
 
@@ -47,39 +39,38 @@ contract VaultStorage {
  */
 contract VaultState {
     VaultStorage.State internal _state;
-    address private immutable _owner;
+    address private immutable _OWNER;
 
     /**
      * @dev Constructor to initialize the vault state
-     * @param wormholeAddr Address of the Wormhole contract
-     * @param chainId_ Chain ID for this vault
-     * @param evmChainId_ EVM Chain ID
+     * @param wormholeAddr_ Address of the Wormhole contract on this chain (Arbitrum Sepolia)
+     * @param chainId_ Wormhole Chain ID for this vault (10003 = Arbitrum Sepolia)
+     * @param evmChainId_ Native EVM Chain ID (421614 = Arbitrum Sepolia)
      * @param finality_ Number of confirmations required for finality
-     * @param donationContractAddr Address of the donation contract
+     * @param donationContractAddr_ Address of the donation contract
      */
     constructor(
-        address wormholeAddr,
+        address wormholeAddr_,
         uint16 chainId_,
         uint256 evmChainId_,
         uint8 finality_,
-        address donationContractAddr
+        address donationContractAddr_
     ) {
-        require(wormholeAddr != address(0), "Wormhole address cannot be zero");
-        require(donationContractAddr != address(0), "Donation contract address cannot be zero");
+        require(wormholeAddr_ != address(0), "Wormhole address cannot be zero");
+        require(donationContractAddr_ != address(0), "Donation contract address cannot be zero");
         require(finality_ > 0, "Finality must be greater than zero");
 
-        _state.wormhole = wormholeAddr;
+        _state.wormholeAddr = wormholeAddr_;
         _state.provider.chainId = chainId_;
         _state.evmChainId = evmChainId_;
         _state.provider.finality = finality_;
-        _state.initializedImplementations[address(this)] = true;
 
         _state.provider.governanceChainId = 0;
         _state.provider.governanceContract = bytes32(0);
 
-        _state.donationContract = donationContractAddr;
+        _state.donationContractAddr = donationContractAddr_;
 
-        _owner = msg.sender;
+        _OWNER = msg.sender;
     }
 
     /**
@@ -87,14 +78,14 @@ contract VaultState {
      * @return Address of the owner
      */
     function owner() public view returns (address) {
-        return _owner;
+        return _OWNER;
     }
 
     /**
      * @dev Modifier that restricts functions to the owner
      */
     modifier onlyOwner() {
-        require(msg.sender == _owner, "Caller is not the owner");
+        require(msg.sender == _OWNER, "Caller is not the owner");
         _;
     }
 }
