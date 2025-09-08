@@ -59,8 +59,8 @@ The system uses **two different chain ID formats**:
   - Aztec: `52`
 
 - **EVM Chain ID** (`uint256`): Native blockchain identifier
+  - Local Anvil: `31337` 
   - Arbitrum Sepolia: `421614`
-  - Local Anvil: `31337`
 
 ## 🚀 Deployment
 
@@ -74,23 +74,31 @@ foundryup
 forge install
 ```
 
+### Environment Setup
+```bash
+# Copy environment template
+cp env.example .env
+
+# Edit .env with your values
+PRIVATE_KEY=your_private_key_here
+DONATION_RECEIVER=0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+ARBITRUM_SEPOLIA_RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
+```
+
 ### Local Deployment (Anvil)
 ```bash
 # Start local node
-anvil
+anvil --host 0.0.0.0 --port 8545
 
-# Deploy contracts
-forge script script/DeployVault.s.sol:DeployVault \
-    --rpc-url http://localhost:8545 \
-    --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
-    --broadcast
+# Deploy contracts (automatically detects local network)
+forge script script/DeployVault.s.sol --rpc-url http://localhost:8545 --broadcast
 ```
 
 ### Arbitrum Sepolia Deployment
 ```bash
-forge script script/DeployVault.s.sol:DeployVault \
-    --rpc-url https://sepolia-rollup.arbitrum.io/rpc \
-    --private-key $PRIVATE_KEY \
+# Deploy with verification
+forge script script/DeployVault.s.sol \
+    --rpc-url $ARBITRUM_SEPOLIA_RPC_URL \
     --broadcast \
     --verify
 ```
