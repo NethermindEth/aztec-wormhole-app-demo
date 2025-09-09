@@ -119,13 +119,13 @@ pub contract ZKPassportCredentialEmitter {
         );
 
         let bridge_address = AztecAddress {
-            inner: 0x25c6603099990f1085903124acaf00217a6e29e50baf163036c566a83c9bb6e3 // This is a placeholder, replace with actual bridge address
+            inner: 0x0d071eec273fa0c82825d9c5d2096965a40bcc33ae942714cf6c683af9632504 // TODO: confirm address, rename variable, remove hardcoding
         };
 
         // 2. Perform zk Donation
         let _ = Token::at(token_address).transfer_in_private(
             context.msg_sender(),
-            bridge_address, // should be hardcoded to the bridge address but for demo purposes the user can supply it
+            bridge_address, // should be set to the bridge address but for demo purposes the user can supply it
             amount,
             nonce
         ).call(&mut context);
