@@ -88,10 +88,13 @@ aztec-wallet deploy \
     --payment method=fpc-sponsored,fpc=contracts:sponsoredfpc \
     --alias emitter \
     target/emitter-ZKPassportCredentialEmitter.json \
+    --no-init \
     --no-wait
 ```
 
-**Important**: Wait for the transaction to be mined. You can check the transaction status at [AztecScan](http://aztecscan.xyz/)
+**Important**: 
+- The `--no-init` flag is required because this contract has no constructor or initializer function
+- Wait for the transaction to be mined. You can check the transaction status at [AztecScan](http://aztecscan.xyz/)
 
 ### 7. Capture Emitter Contract Address
 
@@ -167,6 +170,7 @@ Ensure these contracts are deployed and their addresses are available when calli
 
 ### Common Deployment Errors
 
+- **"Constructor method constructor not found in contract artifact"**: This contract has no constructor - use the `--no-init` flag in the deploy command
 - **"Contract not found" errors**: Ensure you've compiled the contract with `aztec-nargo compile` first
 - **"Invalid artifact path" errors**: Verify the path `target/emitter-ZKPassportCredentialEmitter.json` exists after compilation
 - **"Account not found" errors**: Make sure the owner wallet has been created and deployed successfully
