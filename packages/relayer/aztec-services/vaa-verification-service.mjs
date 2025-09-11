@@ -328,6 +328,99 @@ app.post('/test', async (req, res) => {
   }
 });
 
+app.post('/test-publish', async (req, res) => {  
+  console.log('🧪 Testing a Hello Wormhole message from Aztec on TESTNET');
+  
+  // Debug contract state before calling verify
+  console.log('🔍 Pre-verification debug:');
+  console.log(`   - Service ready: ${isReady}`);
+  console.log(`   - Contract object exists: ${!!wormholeContract}`);
+  if (wormholeContract) {
+    console.log(`   - Contract address: ${wormholeContract.address.toString()}`);
+    console.log(`   - Expected address: ${CONTRACT_ADDRESS}`);
+  }
+  
+  // Set up request body and call verify logic directly
+  const testReq = { 
+    body: { vaaBytes: realVAA },
+    // Add debug flag
+    isTest: true
+  };
+  
+  // Call verify logic directly instead of using the router
+  if (!isReady) {
+    return res.status(503).json({ 
+      success: false, 
+      error: 'Service not ready - Aztec testnet connection still initializing' 
+    });
+  }
+
+  try {
+  const { vaaBytes } = testReq.body;
+
+  const noncePath = join(__dirname, 'nonce.json');
+  const nonce_file_data = JSON.parse(readFileSync(noncePath, 'utf8'));
+
+  // Safe BigInt handling
+  const current_nonce = nonce_file_data.token_nonce
+    ? BigInt(nonce_file_data.token_nonce)
+    : 0n;
+
+  const token_nonce = current_nonce + 1n;
+
+  const new_nonce_data = { token_nonce: token_nonce.toString() };
+
+  writeFileSync(noncePath, JSON.stringify(new_nonce_data, null, 2));  
+  console.log(`Using token nonce: ${token_nonce}`);
+  
+  // First, set up the private auth witness for the Wormhole contract
+  const tokenTransferAction = token.methods.transfer_in_private(
+    ownerAddress, 
+    receiverWallet.getAddress(),
+    2n,
+    token_nonce  
+  ); 
+
+  
+  
+  // Convert hex to buffer
+  const hexString = vaaBytes.startsWith('0x') ? vaaBytes.slice(2) : vaaBytes;
+  const vaaBuffer = Buffer.from(hexString, 'hex');
+  
+  // Call verify_vaa function with padded bytes and actual length
+  console.log('🔄 Calling contract method verify_vaa with PADDED data...');
+  const interaction = await wormholeContract.methods
+      .verify_vaa(vaaArray, actualLength);
+
+  console.log('🔄 Capturing interaction profile...');
+
+  await captureProfile('verify_vaa', interaction);
+
+  console.log('🔄 Sending transaction...');
+  await interaction.send({ fee: { paymentMethod } }).wait();
+  
+  console.log(`✅ VAA verified successfully on TESTNET: ${tx.txHash}`);
+  
+  res.json({
+    success: true,
+    network: 'testnet',
+    txHash: tx.txHash,
+    contractAddress: CONTRACT_ADDRESS,
+    message: 'VAA verified successfully on Aztec testnet (TEST ENDPOINT)',
+    processedAt: new Date().toISOString()
+  });
+  } catch (error) {
+    console.error('❌ VAA verification failed on TESTNET:', error.message);
+    console.error('❌ Full error:', error);
+    res.status(500).json({
+      success: false,
+      network: 'testnet',
+      error: error.message,
+      processedAt: new Date().toISOString()
+    });
+  }
+});
+
 // Start server
 init().then(() => {
   app.listen(PORT, () => {
