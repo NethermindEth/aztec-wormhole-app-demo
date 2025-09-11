@@ -108,6 +108,9 @@ export EMITTER_CONTRACT_ADDRESS=<emitter_contract_address_from_step_6>
 If you maintain an addresses configuration file:
 
 ```bash
+# Create addresses.json file if it doesn't exist
+echo '{}' > addresses.json
+
 # Update the addresses.json file with the new emitter address
 jq --arg emitter "$EMITTER_CONTRACT_ADDRESS" '.emitter = $emitter' addresses.json > addresses.json.tmp && mv addresses.json.tmp addresses.json
 ```
