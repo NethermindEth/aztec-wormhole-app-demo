@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "./BridgeToken.sol";
+import {BridgeToken} from "./BridgeToken.sol";
 
 /**
  * @title Donation
