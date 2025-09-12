@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  wormhole-spy:
+    image: ghcr.io/wormhole-foundation/guardiand:latest
+    platform: linux/amd64
+    environment:
+      - HOME=/tmp
+    ports:
+      - "7073:7073"
+    entrypoint: /guardiand
+    command:
+      - spy
+      - --nodeKey=/node.key
+      - --spyRPC=[::]:7073
+      - --env=mainnet
+    networks:
+      - wormhole-network
+
+  relayer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - wormhole-spy
+    environment:
+      # Spy connection
+      - SPY_RPC_HOST=wormhole-spy:7073
+      
+      # # Chain IDs
+      # - SOURCE_CHAIN_ID=56  # Aztec
+      # - DEST_CHAIN_ID=10003  # Arbitrum Sepolia
+      
+      # # Wormhole and emitter configuration
+      # - WORMHOLE_CONTRACT=0x0848d2af89dfd7c0e171238f9216399e61e908cd31b0222a920f1bf621a16ed6
+      # - EMITTER_ADDRESS=0x0848d2af89dfd7c0e171238f9216399e61e908cd31b0222a920f1bf621a16ed6
+      
+      # # Aztec configuration
+      # - AZTEC_WALLET_ADDRESS=${AZTEC_WALLET_ADDRESS:-0x1f3933ca4d66e948ace5f8339e5da687993b76ee57bcf65e82596e0fc10a8859}
+      # - AZTEC_PXE_URL=${AZTEC_PXE_URL:-http://host.docker.internal:8090}
+      # - AZTEC_TARGET_CONTRACT=${AZTEC_TARGET_CONTRACT:-0x0848d2af89dfd7c0e171238f9216399e61e908cd31b0222a920f1bf621a16ed6}
+      
+      # # Arbitrum configuration
+      # - ARBITRUM_RPC_URL=${ARBITRUM_RPC_URL:-https://sepolia-rollup.arbitrum.io/rpc}
+      # - PRIVATE_KEY=${PRIVATE_KEY:-0x0ff5c4c050588f4614255a5a4f800215b473e442ae9984347b3a727c3bb7ca55}
+      # - ARBITRUM_TARGET_CONTRACT=${ARBITRUM_TARGET_CONTRACT:-0x248EC2E5595480fF371031698ae3a4099b8dC229}
+      
+      # # Verification service (optional)
+      # - VERIFICATION_SERVICE_URL=${VERIFICATION_SERVICE_URL:-http://host.docker.internal:8080}
+    networks:
+      - wormhole-network
+    volumes:
+      - ./logs:/logs
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  wormhole-network:
+    driver: bridge
