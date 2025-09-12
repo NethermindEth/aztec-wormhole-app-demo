@@ -56,7 +56,7 @@ The system uses **two different chain ID formats**:
 
 - **Wormhole Chain ID** (`uint16`): Cross-chain protocol identifier
   - Arbitrum Sepolia: `10003`
-  - Aztec: `52`
+  - Aztec: `56`
 
 - **EVM Chain ID** (`uint256`): Native blockchain identifier
   - Local Anvil: `31337` 
@@ -91,16 +91,15 @@ ARBITRUM_SEPOLIA_RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
 anvil --host 0.0.0.0 --port 8545
 
 # Deploy contracts (automatically detects local network)
-forge script script/DeployVault.s.sol --rpc-url http://localhost:8545 --broadcast
+forge script script/DeployVault.s.sol --fork-url http://localhost:8545 --broadcast
 ```
 
 ### Arbitrum Sepolia Deployment
 ```bash
-# Deploy with verification
+# Deploy to testnet
 forge script script/DeployVault.s.sol \
-    --rpc-url $ARBITRUM_SEPOLIA_RPC_URL \
-    --broadcast \
-    --verify
+    --fork-url $ARBITRUM_SEPOLIA_RPC_URL \
+    --broadcast
 ```
 
 **⚠️ Note**: Get testnet ETH from [Arbitrum Sepolia Faucet](https://faucet.quicknode.com/arbitrum/sepolia)

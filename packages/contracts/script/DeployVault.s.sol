@@ -12,10 +12,10 @@ import {console} from "forge-std/console.sol";
  * 
  * Usage:
  *   # Local deployment (Anvil)
- *   forge script script/DeployVault.s.sol --rpc-url http://localhost:8545 --broadcast
+ *   forge script script/DeployVault.s.sol --fork-url http://localhost:8545 --broadcast
  *   
  *   # Arbitrum Sepolia testnet deployment  
- *   forge script script/DeployVault.s.sol --rpc-url $ARBITRUM_SEPOLIA_RPC_URL --broadcast --verify
+ *   forge script script/DeployVault.s.sol --fork-url $ARBITRUM_SEPOLIA_RPC_URL --broadcast
  *   
  * Required environment variables:
  *   PRIVATE_KEY - Deployer private key
@@ -63,7 +63,7 @@ contract DeployVault is Script {
         console.log("Vault deployed to:", vaultAddress);
 
         // Register Aztec emitter
-        vault.registerEmitter(52, aztecEmitter); // 52 = Aztec Wormhole Chain ID
+        vault.registerEmitter(56, aztecEmitter); // 56 = Aztec Wormhole Chain ID
         console.log("Registered Aztec emitter:", vm.toString(aztecEmitter));
 
         vm.stopBroadcast();
@@ -87,13 +87,13 @@ contract DeployVault is Script {
             wormholeAddress = 0xC89Ce4735882C9F0f0FE26686c53074E09B0D550;
             wormholeChainId = 10003;
             finality = 2;
-            aztecEmitter = 0x0d6fe810321185c97a0e94200f998bcae787aaddf953a03b14ec5da3b6838bad;
+            aztecEmitter = 0x0f8a2300a7925c586135b1c142dc0b833f20d5c41ea6e815900d65d041e96cf5;
         } else if (block.chainid == 421614) {
             // Arbitrum Sepolia - can override via env vars
             wormholeAddress = vm.envOr("WORMHOLE_ADDRESS", address(0x6b9C8671cdDC8dEab9c719bB87cBd3e782bA6a35));
             wormholeChainId = uint16(vm.envOr("WORMHOLE_CHAIN_ID", uint256(10003)));
             finality = uint8(vm.envOr("FINALITY", uint256(2)));
-            aztecEmitter = vm.envOr("AZTEC_EMITTER_ADDRESS", bytes32(0x0d6fe810321185c97a0e94200f998bcae787aaddf953a03b14ec5da3b6838bad));
+            aztecEmitter = vm.envOr("AZTEC_EMITTER_ADDRESS", bytes32(0x0f8a2300a7925c586135b1c142dc0b833f20d5c41ea6e815900d65d041e96cf5));
         } else {
             revert(string.concat("Unsupported chain ID: ", vm.toString(block.chainid), " (only local and testnet supported)"));
         }
