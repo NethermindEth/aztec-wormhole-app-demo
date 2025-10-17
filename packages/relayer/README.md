@@ -118,6 +118,8 @@ Relays Wormhole VAAs from Aztec to EVM-compatible chains.
 | `--evm-target-contract` | `0x248EC2E5...` | Target contract on EVM chain | No |
 | `--chain-id` | `10003` | Destination EVM chain ID | No |
 
+> **Note:** The stock EVM submitter targets the demo contract included in this repo. If your contract exposes a different interface you must update the Go code—see [EVM Submitter Reference Implementation](#evm-submitter-reference-implementation).
+
 #### Example Usage
 
 ```bash
@@ -166,6 +168,22 @@ WORMHOLE_RELAYER_SPY_RPC_HOST=your-spy-host:7073
 WORMHOLE_RELAYER_AZTEC_PXE_URL=http://your-pxe:8090
 WORMHOLE_RELAYER_EVM_RPC_URL=https://your-rpc-endpoint
 ```
+
+### EVM Submitter Reference Implementation
+
+The EVM relayer ships with a minimal submitter that targets the example contract in this repository. It calls a `verify(bytes encodedVm)` method and assumes:
+
+- The contract ABI matches the hardcoded call in `internal/clients/evm.go`.
+- Only a single `bytes` argument (the VAA payload) is required.
+- No ETH value needs to be sent and a static gas limit of `3,000,000` is sufficient.
+
+This is intended as scaffolding. Expect to copy and adapt the submitter for your own contract, wiring in your contract’s ABI and method signature.
+
+#### Builder Checklist
+
+- [ ] Duplicate `internal/clients/evm.go` / `internal/submitter/evm.go` (or fork the relayer) 
+- [ ] Adjust argument packing to match your contract inputs (e.g., multiple parameters, structs, non-`bytes` types).
+- [ ] Update gas limit/value strategy if needed.
 
 ## Architecture
 
