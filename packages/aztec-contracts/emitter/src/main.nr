@@ -6,21 +6,16 @@ pub contract ZKPassportCredentialEmitter {
         macros::{
             functions::private,
         }, 
-        prelude::{AztecAddress}, 
-        protocol_types::traits::{Deserialize, Serialize}
+        protocol_types::{
+            address::AztecAddress,
+            traits::{Deserialize, Serialize, FromField}
+        }
     };
     use dep::std;
     use dep::wormhole::Wormhole;
     use dep::token::Token;
 
-    #[derive(Deserialize, Serialize)]
-    pub struct ContractProofData {
-        vkeys: vkeys,
-        proofs: proofs,
-        vkey_hashes: vkey_hashes,
-        public_inputs: public_inputs,
-    }
-
+    #[derive(Serialize, Deserialize)]
     struct vkeys {
         vkey_a: [Field; 128],
         vkey_b: [Field; 128],
@@ -30,6 +25,7 @@ pub contract ZKPassportCredentialEmitter {
         vkey_f: [Field; 128],
     }
 
+    #[derive(Serialize, Deserialize)]
     struct proofs {
         proof_a: [Field; 456],
         proof_b: [Field; 456],
@@ -39,6 +35,7 @@ pub contract ZKPassportCredentialEmitter {
         proof_f: [Field; 456],
     }
 
+    #[derive(Serialize, Deserialize)]
     struct public_inputs {
         input_a: [Field; 2],
         input_b: [Field; 2],
@@ -48,6 +45,7 @@ pub contract ZKPassportCredentialEmitter {
         input_f: [Field; 5],
     }
 
+    #[derive(Serialize, Deserialize)]
     struct vkey_hashes {
         vkey_hash_a: Field,
         vkey_hash_b: Field,
@@ -57,8 +55,16 @@ pub contract ZKPassportCredentialEmitter {
         vkey_hash_f: Field,
     }
 
+    #[derive(Serialize, Deserialize)]
+    pub struct ContractProofData {
+        vkeys: vkeys,
+        proofs: proofs,
+        vkey_hashes: vkey_hashes,
+        public_inputs: public_inputs,
+    }
+
     #[private]
-    pub fn verify_and_publish(
+    fn verify_and_publish(
         contractProofData: ContractProofData,
         msg: [[u8;31];7], // Format: [zkDonation Arb Address, Arb chain ID, msg1, msg2, msg3, msg4, msg5]
         wormhole_address: AztecAddress,
@@ -118,9 +124,7 @@ pub contract ZKPassportCredentialEmitter {
             1
         );
 
-        let bridge_address = AztecAddress {
-            inner: 0x0d071eec273fa0c82825d9c5d2096965a40bcc33ae942714cf6c683af9632504 // TODO: confirm address, rename variable, remove hardcoding
-        };
+        let bridge_address = AztecAddress::from_field(0x0d071eec273fa0c82825d9c5d2096965a40bcc33ae942714cf6c683af9632504); // TODO: confirm address, rename variable, remove hardcoding
 
         // 2. Perform zk Donation
         let _ = Token::at(token_address).transfer_in_private(
@@ -145,13 +149,14 @@ pub contract ZKPassportCredentialEmitter {
         let wormhole_payload = [msg[0], msg[1], payload3, msg[2], msg[3], msg[4], msg[5], msg[6]];
                 
         // 4. call publish message
+        // Wormhole signature: fn publish_message_in_private(nonce: u64, payloads: [[u8; 31]; 8], message_fee: u128, consistency: u8, from: AztecAddress, token_nonce: Field)
         let _ = Wormhole::at(wormhole_address).publish_message_in_private(
-            1, 
-            wormhole_payload,
-            2,
-            2,
-            context.msg_sender(),
-            nonce,
+            1, // nonce: u64
+            wormhole_payload, // payloads: [[u8; 31]; 8]
+            2, // message_fee: u128
+            2, // consistency: u8
+            context.msg_sender(), // from: AztecAddress
+            nonce, // token_nonce: Field
         ).call(&mut context);
     }
 }

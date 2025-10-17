@@ -18,8 +18,10 @@ The `ZKPassportCredentialEmitter` contract verifies ZK passport proofs and publi
 
 ```bash
 # Testnet configuration
-export NODE_URL=https://aztec-alpha-testnet-fullnode.zkv.xyz
-export SPONSORED_FPC_ADDRESS=0x19b5539ca1b104d4c3705de94e4555c9630def411f025e023a13189d0c56f8f22
+export NODE_URL=https://aztec-testnet-fullnode.zkv.xyz
+export SPONSORED_FPC_ADDRESS=0x299f255076aa461e4e94a843f0275303470a6b8ebe7cb44a471c66711151e529
+# FPC address valid as of v2.0.3; to fetch the latest run:
+# aztec get-canonical-sponsored-fpc-address
 
 # Owner private key
 export OWNER_SK=<private_key>
@@ -75,8 +77,9 @@ Ensure the contract is compiled before deployment:
 # Navigate to the emitter contract directory if not already there
 cd packages/aztec-contracts/emitter
 
-# Compile the contract
+# Compile and postprocess the contract (v2.0.3 requires both steps)
 aztec-nargo compile
+aztec-postprocess-contract
 ```
 
 ### 6. Deploy ZKPassport Credential Emitter Contract
@@ -119,10 +122,11 @@ jq --arg emitter "$EMITTER_CONTRACT_ADDRESS" '.emitter = $emitter' addresses.jso
 
 ### Understanding the Contract Interface
 
-The emitter contract provides a single public function:
+The emitter contract exposes a single private entrypoint:
 
 ```noir
-pub fn verify_and_publish(
+#[private]
+fn verify_and_publish(
     contractProofData: ContractProofData,
     msg: [[u8;31];7], // Format: [zkDonation Arb Address, Arb chain ID, msg1, msg2, msg3, msg4, msg5]
     wormhole_address: AztecAddress,
@@ -188,7 +192,7 @@ Ensure these contracts are deployed and their addresses are available when calli
 
 ### Contract-Specific Issues
 
-- **Compilation errors**: Ensure all dependencies are properly resolved in `Nargo.toml`
+- **Compilation errors**: Ensure all dependencies are properly resolved in `Nargo.toml` and that you ran both `aztec-nargo compile` and `aztec-postprocess-contract`
 - **Wrong contract artifact**: Make sure you're deploying the correct JSON artifact file
 - **CLI vs SDK differences**: The CLI deployment method differs from the JavaScript SDK used in `deploy.mjs` - follow this guide for CLI deployment
 
