@@ -6,8 +6,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/NethermindEth/aztec-wormhole-app-demo/packages/relayer/internal/clients"
-	"github.com/NethermindEth/aztec-wormhole-app-demo/packages/relayer/internal/submitter"
+	"github.com/NethermindEth/aztec-wormhole-app-demo/go-relayer/internal/clients"
+	"github.com/NethermindEth/aztec-wormhole-app-demo/go-relayer/internal/submitter"
 )
 
 // ExampleEVMSubmitterUsage demonstrates how to use the EVMSubmitter

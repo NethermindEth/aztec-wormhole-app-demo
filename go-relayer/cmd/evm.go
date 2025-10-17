@@ -11,9 +11,9 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
-	"github.com/NethermindEth/aztec-wormhole-app-demo/packages/relayer/internal"
-	"github.com/NethermindEth/aztec-wormhole-app-demo/packages/relayer/internal/clients"
-	"github.com/NethermindEth/aztec-wormhole-app-demo/packages/relayer/internal/submitter"
+	"github.com/NethermindEth/aztec-wormhole-app-demo/go-relayer/internal"
+	"github.com/NethermindEth/aztec-wormhole-app-demo/go-relayer/internal/clients"
+	"github.com/NethermindEth/aztec-wormhole-app-demo/go-relayer/internal/submitter"
 )
 
 const (

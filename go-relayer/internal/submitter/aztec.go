@@ -6,7 +6,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/NethermindEth/aztec-wormhole-app-demo/packages/relayer/internal/clients"
+	"github.com/NethermindEth/aztec-wormhole-app-demo/go-relayer/internal/clients"
 )
 
 type AztecSubmitter struct {

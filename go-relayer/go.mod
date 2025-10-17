@@ -1,4 +1,4 @@
-module github.com/NethermindEth/aztec-wormhole-app-demo/packages/relayer
+module github.com/NethermindEth/aztec-wormhole-app-demo/go-relayer
 
 go 1.24.1
 

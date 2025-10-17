@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/NethermindEth/aztec-wormhole-app-demo/packages/relayer/internal/submitter"
+	"github.com/NethermindEth/aztec-wormhole-app-demo/go-relayer/internal/submitter"
 	"go.uber.org/zap"
 )
 

@@ -22,7 +22,7 @@ This relayer monitors the Wormhole network for Verified Action Approvals (VAAs) 
 ```bash
 # Clone the repository (if not already cloned)
 git clone https://github.com/NethermindEth/aztec-wormhole-app-demo.git
-cd aztec-wormhole-app-demo/packages/relayer
+cd aztec-wormhole-app-demo/go-relayer
 
 # Download dependencies
 go mod download

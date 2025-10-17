@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/NethermindEth/aztec-wormhole-app-demo/packages/relayer/internal/clients"
+	"github.com/NethermindEth/aztec-wormhole-app-demo/go-relayer/internal/clients"
 	vaaLib "github.com/wormhole-foundation/wormhole/sdk/vaa"
 	"go.uber.org/zap"
 )
