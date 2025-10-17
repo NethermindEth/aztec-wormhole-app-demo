@@ -11,7 +11,7 @@ This relayer monitors the Wormhole network for Verified Action Approvals (VAAs) 
 ## Prerequisites
 
 - Go 1.20 or higher
-- Access to a Wormhole Spy service (default: `localhost:7073`)
+- Access to a Wormhole Spy service (default: `localhost:7073`). See [here](https://wormhole.com/docs/protocol/infrastructure-guides/run-spy/#__tabbed_1_2) for details on running the service.
 - For Aztec relaying: Access to an Aztec PXE node
 - For EVM relaying: Private key with sufficient funds for gas fees
 
