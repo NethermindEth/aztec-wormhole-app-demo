@@ -130,7 +130,7 @@ export default function Home() {
       })
 
       // Handle query results and format proofs
-      onResult(async (resultData: { result: QueryResult, uniqueIdentifier: string | undefined, verified: boolean, queryResultErrors?: QueryResultErrors } & Record<string, unknown>) => {
+      onResult(async (resultData) => {
         const { 
           result, 
           uniqueIdentifier, 
@@ -145,7 +145,7 @@ export default function Home() {
         console.log("Unique identifier:", uniqueIdentifier)
         
         // Try to find proofs in different possible locations
-        let proofs: ProofResult[] | null = (resultData.proofs as ProofResult[]) || (resultData.proof as ProofResult[]) || (resultData.proofResults as ProofResult[]) || null;
+        let proofs: ProofResult[] | null = (resultData as Record<string, unknown>).proofs as ProofResult[] || (resultData as Record<string, unknown>).proof as ProofResult[] || (resultData as Record<string, unknown>).proofResults as ProofResult[] || null;
         console.log("Raw proofs received:", proofs)
         console.log("Proofs type:", typeof proofs)
         
