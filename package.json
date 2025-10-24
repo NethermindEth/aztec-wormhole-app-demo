@@ -1,16 +1,22 @@
 {
   "name": "aztec-wormhole-zkpassport",
   "version": "1.0.0",
-  "description": "**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**",
+  "description": "Monorepo for Aztec/Wormhole demo with frontend, Foundry, Go relayer, and Noir",
+  "private": true,
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "private": true,
   "workspaces": [
-    "packages/*"
-  ]
+    "packages/*",
+    "packages/*/*"
+  ],
+  "devDependencies": {
+    "turbo": "^2"
+  },
+  "packageManager": "npm@10.9.0"
 }
