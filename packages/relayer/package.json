@@ -1,0 +1,12 @@
+{
+  "name": "relayer",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "build": "go build -o ./bin/relayer ./...",
+    "dev": "go run ./relayer.go",
+    "test": "go test ./...",
+    "clean": "rm -rf ./bin"
+  }
+}
+

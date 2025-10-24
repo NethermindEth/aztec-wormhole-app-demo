@@ -1,0 +1,13 @@
+{
+  "name": "evm-contracts",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "prebuild": "sh -c 'test -d lib/openzeppelin-contracts || forge install openzeppelin/openzeppelin-contracts; test -d lib/wormhole || forge install wormhole-foundation/wormhole'",
+    "build": "forge build",
+    "test": "forge test -vvv",
+    "lint": "forge fmt --check",
+    "clean": "forge clean"
+  }
+}
+
