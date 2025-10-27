@@ -57,11 +57,18 @@ Before you begin, ensure you have the following installed:
 
 ## 📥 Installation
 
-1. **Clone the repository**
+1. **Clone the repository with submodules**
    ```bash
-   git clone <repository-url>
+   git clone --recurse-submodules <repository-url>
    cd aztec-wormhole-app-demo
    ```
+
+   **Already cloned without submodules?** Initialize them:
+   ```bash
+   git submodule update --init --recursive
+   ```
+
+   > **Note:** This project uses Git submodules for the Wormhole protocol implementation. The `--recurse-submodules` flag ensures all dependencies are properly initialized.
 
 2. **Install dependencies**
    ```bash
@@ -221,6 +228,23 @@ The application has been tested with:
 - [Turborepo Documentation](https://turbo.build/repo/docs)
 
 ## 🐛 Troubleshooting
+
+### Missing Submodules Error
+
+**Error:** `Cannot find module 'wormhole/ethereum/contracts/...'` or compilation failures in EVM contracts (`Vault.sol`, `VaultGetters.sol`)
+
+**Cause:** The Wormhole submodule wasn't initialized during clone.
+
+**Solution:**
+```bash
+git submodule update --init --recursive
+```
+
+After initializing submodules, rebuild the EVM contracts:
+```bash
+cd packages/evm-contracts
+forge build
+```
 
 ### Node.js Version Error
 

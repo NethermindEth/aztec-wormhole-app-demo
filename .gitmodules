@@ -1,9 +1,6 @@
 [submodule "packages/contracts/lib/forge-std"]
 	path = packages/contracts/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
-[submodule "packages/contracts/lib/wormhole"]
-	path = packages/contracts/lib/wormhole
-	url = https://github.com/wormhole-foundation/wormhole
 [submodule "packages/contracts/lib/openzeppelin-contracts"]
 	path = packages/contracts/lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
@@ -12,4 +9,4 @@
 	url = https://github.com/openzeppelin/openzeppelin-contracts
 [submodule "packages/evm-contracts/lib/wormhole"]
 	path = packages/evm-contracts/lib/wormhole
-	url = https://github.com/wormhole-foundation/wormhole
+	url = https://github.com/NethermindEth/wormhole
