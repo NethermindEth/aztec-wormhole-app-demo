@@ -1,9 +1,11 @@
 // src/deploy.mjs
 import { getInitialTestAccountsWallets } from '@aztec/accounts/testing';
 import { AztecAddress, Contract, createPXEClient, loadContractArtifact, waitForPXE } from '@aztec/aztec.js';
-import EmitterJSON from "./emitter-ZKPassportCredentialEmitter.json" assert { type: "json" };
+import EmitterJSON from "../artifacts/emitter-ZKPassportCredentialEmitter.json" assert { type: "json" };
 
 import { writeFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { TokenContract } from '@aztec/noir-contracts.js/Token'; 
 
 const EmitterContractArtifact = loadContractArtifact(EmitterJSON);
@@ -55,6 +57,9 @@ async function main() {
 
   console.log(`Owner address: ${ownerAddress}`);
   console.log(`Receiver address: ${receiverWallet.getAddress()}`);
+
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
 
   // EXISTING WORMHOLE AND TOKEN CONTRACT ADDRESSES
   const wormhole_address = AztecAddress.fromString("0x1320a7c89797e4506b683fcc547acb7f02a809bd1b3a967a3dfe18b7d3f38669");
@@ -118,7 +123,8 @@ async function main() {
   const donationWitness = await ownerWallet.createAuthWit({ caller: emitter.address, action: donationAction });
 
   const addresses = { emitter: emitter.address.toString() };
-  writeFileSync('addresses.json', JSON.stringify(addresses, null, 2));
+  const addressesPath = join(__dirname, '../assets/addresses.json');
+  writeFileSync(addressesPath, JSON.stringify(addresses, null, 2));
 
   console.log("Getting emitter contract...")
 

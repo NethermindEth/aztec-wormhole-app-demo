@@ -1,7 +1,7 @@
 // src/send-message.mjs
 import { getInitialTestAccountsWallets } from '@aztec/accounts/testing';
 import { AztecAddress, Contract, createPXEClient, loadContractArtifact, waitForPXE } from '@aztec/aztec.js';
-import EmitterJSON from "./emitter-ZKPassportCredentialEmitter.json" assert { type: "json" };
+import EmitterJSON from "../artifacts/emitter-ZKPassportCredentialEmitter.json" assert { type: "json" };
 import { TokenContract } from '@aztec/noir-contracts.js/Token';
 import { readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -185,7 +185,7 @@ async function main() {
   // Load addresses from file or use hardcoded defaults
   let addresses;
   try {
-    const addressesPath = join(__dirname, 'addresses.json');
+    const addressesPath = join(__dirname, '../assets/addresses.json');
     addresses = JSON.parse(readFileSync(addressesPath, 'utf8'));
     console.log("Using addresses from addresses.json:", addresses);
   } catch (error) {
@@ -206,7 +206,7 @@ async function main() {
   console.log("Getting token contract...");
   const token = await TokenContract.at(token_address, ownerWallet);
 
-  const noncePath = join(__dirname, 'nonce.json');
+  const noncePath = join(__dirname, '../assets/nonce.json');
   const nonce_file_data = JSON.parse(readFileSync(noncePath, 'utf8'));
 
   // Safe BigInt handling
