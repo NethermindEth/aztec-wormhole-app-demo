@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "build": "nargo compile",
+    "build": "aztec-nargo compile",
     "clean": "rm -rf target"
   }
 }
