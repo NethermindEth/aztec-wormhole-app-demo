@@ -1,0 +1,4 @@
+packages/go-relayer/* @gpevnev @svlachakis @EdgarBarrantes
+packages/aztec-contracts/* @EdgarBarrantes @MBelegris
+packages/evm-contracts/* @MBelegris @EdgarBarrantes
+packages/frontend/* @EdgarBarrantes
