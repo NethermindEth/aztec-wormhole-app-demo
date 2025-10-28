@@ -24,15 +24,21 @@ This project uses **Turborepo** for efficient monorepo management:
 ```
 aztec-wormhole-app-demo/
 ├── packages/
-│   ├── frontend/              # Next.js web application
-│   ├── aztec-contracts/       # Noir smart contracts for Aztec
-│   │   └── emitter/          # ZKPassport credential emitter contract
-│   ├── evm-contracts/        # Solidity contracts (Foundry)
-│   │   ├── src/              # Contract sources (Vault, Donation, BridgeToken)
-│   │   └── script/           # Deployment scripts
-│   └── relayer/              # Go-based bidirectional Aztec-Arbitrum relayer
-├── package.json              # Root workspace configuration
-└── turbo.json               # Turborepo configuration
+│   ├── frontend/                    # Next.js web application
+│   │   └── app/
+│   │       ├── artifacts/           # Compiled Aztec contract artifacts (auto-generated)
+│   │       ├── scripts/             # Contract deployment & interaction scripts
+│   │       └── assets/              # Contract addresses & configuration
+│   ├── aztec-contracts/             # Noir smart contracts for Aztec
+│   │   ├── emitter/                 # ZKPassport credential emitter contract
+│   │   ├── wormhole/                # Wormhole protocol implementation
+│   │   └── wormhole-source/         # Git submodule (NethermindEth/wormhole)
+│   ├── evm-contracts/               # Solidity contracts (Foundry)
+│   │   ├── src/                     # Contract sources (Vault, Donation, BridgeToken)
+│   │   └── script/                  # Deployment scripts
+│   └── relayer/                     # Go-based bidirectional Aztec-Arbitrum relayer
+├── package.json                     # Root workspace configuration
+└── turbo.json                       # Turborepo configuration
 ```
 
 ## 🚀 Prerequisites
@@ -51,6 +57,13 @@ Before you begin, ensure you have the following installed:
 
 - **npm**: Version `>=10.0.0` (comes with Node.js 20+)
 
+- **Aztec Nargo**: For compiling Aztec contracts (optional if using pre-built artifacts)
+  ```bash
+  # Install Aztec
+  bash -i <(curl -s https://install.aztec.network)
+  ```
+  See [Aztec Installation Guide](https://docs.aztec.network/getting-started) for details.
+
 - **Go**: For running the relayer (optional if you only want to run the frontend)
 
 - **Foundry**: For EVM contract development (optional)
@@ -68,7 +81,11 @@ Before you begin, ensure you have the following installed:
    git submodule update --init --recursive
    ```
 
-   > **Note:** This project uses Git submodules for the Wormhole protocol implementation. The `--recurse-submodules` flag ensures all dependencies are properly initialized.
+   > **Note:** This project uses Git submodules for Wormhole protocol implementations:
+   > - `packages/evm-contracts/lib/wormhole` - For Solidity contract dependencies
+   > - `packages/aztec-contracts/wormhole-source` - For Aztec/Noir contract sources (aztec branch)
+   >
+   > The `--recurse-submodules` flag ensures all dependencies are properly initialized.
 
 2. **Install dependencies**
    ```bash
@@ -156,13 +173,50 @@ npm run build
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
 
-### Aztec Contracts (`packages/aztec-contracts/emitter`)
+### Aztec Contracts (`packages/aztec-contracts/`)
 
 **Technology Stack:**
 - **Noir** programming language
+- **Aztec Nargo** compiler
 - **Aztec SDK** for contract deployment
 
-Contains the `ZKPassportCredentialEmitter` contract for managing verified credentials on Aztec.
+This package contains two Noir smart contracts for the Aztec network:
+
+#### 1. Emitter Contract (`packages/aztec-contracts/emitter`)
+The `ZKPassportCredentialEmitter` contract for managing verified credentials on Aztec.
+
+#### 2. Wormhole Contract (`packages/aztec-contracts/wormhole`)
+The Aztec implementation of the Wormhole protocol for cross-chain messaging. Sources are symlinked from the `wormhole-source` git submodule (NethermindEth/wormhole, aztec branch).
+
+#### Artifact Generation
+
+Both contracts follow the same build pipeline:
+
+1. **Compilation**: Contracts are compiled using `aztec-nargo compile`
+2. **Artifact Output**: Compiled JSON artifacts are generated in each contract's `target/` directory
+3. **Auto-Copy**: A post-build script automatically copies artifacts to `packages/frontend/app/artifacts/`
+
+**Build Process:**
+
+```bash
+# Build all Aztec contracts (via Turborepo)
+npm run build
+
+# Or build individually
+cd packages/aztec-contracts/emitter
+npm run build  # Compiles and copies emitter-ZKPassportCredentialEmitter.json
+
+cd packages/aztec-contracts/wormhole
+npm run build  # Compiles and copies wormhole_contracts-Wormhole.json
+```
+
+**Generated Artifacts:**
+- `packages/frontend/app/artifacts/emitter-ZKPassportCredentialEmitter.json`
+- `packages/frontend/app/artifacts/wormhole_contracts-Wormhole.json`
+
+These artifacts are imported by the frontend scripts (`deploy.mjs`, `send-message.mjs`) for contract interaction.
+
+**Note:** The artifacts are auto-generated and should not be manually edited. To update them, modify the Noir source code and rebuild.
 
 ### EVM Contracts (`packages/evm-contracts`)
 
@@ -231,19 +285,29 @@ The application has been tested with:
 
 ### Missing Submodules Error
 
-**Error:** `Cannot find module 'wormhole/ethereum/contracts/...'` or compilation failures in EVM contracts (`Vault.sol`, `VaultGetters.sol`)
+**Error:** `Cannot find module 'wormhole/ethereum/contracts/...'` or compilation failures in contracts
 
-**Cause:** The Wormhole submodule wasn't initialized during clone.
+**Cause:** Wormhole submodules weren't initialized during clone.
 
 **Solution:**
 ```bash
 git submodule update --init --recursive
 ```
 
-After initializing submodules, rebuild the EVM contracts:
+**For EVM contracts**, rebuild after initializing submodules:
 ```bash
 cd packages/evm-contracts
 forge build
+```
+
+**For Aztec contracts**, the Wormhole contract sources are symlinked from the `wormhole-source` submodule. If you see broken symlinks or compilation errors:
+```bash
+# Ensure submodules are initialized
+git submodule update --init --recursive
+
+# Rebuild Aztec contracts
+cd packages/aztec-contracts/wormhole
+npm run build
 ```
 
 ### Node.js Version Error

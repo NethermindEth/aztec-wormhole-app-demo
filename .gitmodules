@@ -10,3 +10,7 @@
 [submodule "packages/evm-contracts/lib/wormhole"]
 	path = packages/evm-contracts/lib/wormhole
 	url = https://github.com/NethermindEth/wormhole
+[submodule "packages/aztec-contracts/wormhole-source"]
+	path = packages/aztec-contracts/wormhole-source
+	url = https://github.com/NethermindEth/wormhole
+	branch = aztec
