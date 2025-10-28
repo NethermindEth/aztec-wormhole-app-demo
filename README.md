@@ -121,7 +121,7 @@ npm run dev
 Or using Turborepo filters:
 
 ```bash
-npx turbo run dev --filter=aztec-wormhole-frontend
+npx turbo run dev --filter=aztec-wormhole-demo-frontend
 ```
 
 ### Building
