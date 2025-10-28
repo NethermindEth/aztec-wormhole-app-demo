@@ -1,0 +1,10 @@
+{
+  "name": "aztec-emitter",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "build": "aztec-nargo compile && node copy-artifacts.mjs",
+    "clean": "rm -rf target"
+  }
+}
+

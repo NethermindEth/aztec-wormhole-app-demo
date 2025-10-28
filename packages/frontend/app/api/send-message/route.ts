@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       const encodedData = Buffer.from(JSON.stringify(safeVerificationData)).toString('base64');
       
       // Path to your existing script
-      const scriptPath = path.join(process.cwd(), '/app/contracts/send-message.mjs');
+      const scriptPath = path.join(process.cwd(), '/app/scripts/send-message.mjs');
       
       // Check if the script exists
       if (!fs.existsSync(scriptPath)) {
