@@ -121,7 +121,7 @@ npm run dev
 Or using Turborepo filters:
 
 ```bash
-npx turbo run dev --filter=zkpassport-sdk-example
+npx turbo run dev --filter=aztec-wormhole-frontend
 ```
 
 ### Building
