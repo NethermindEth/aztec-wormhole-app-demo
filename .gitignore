@@ -1,5 +1,49 @@
-packages/aztec-contracts/emitter/target
-/node_modules
+# Dependencies
+node_modules/
+package-lock.json
+
+# Turbo
+.turbo/
+**/.turbo/
+*.turbo-build.log
+**/*.turbo-build.log
+
+# Build outputs
+packages/aztec-contracts/emitter/target/
+packages/evm-contracts/out/
+packages/evm-contracts/cache/
+packages/evm-contracts/lib/
+packages/relayer/bin/
+packages/frontend/.next/
+packages/frontend/out/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+packages/go-relayer/.env
+
+# OS files
 .DS_Store
 package-lock.json
-go-relayer/.env
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Foundry
+packages/evm-contracts/broadcast/
+packages/evm-contracts/.gas-snapshot
+
+# Go
+packages/go-relayer/go.sum

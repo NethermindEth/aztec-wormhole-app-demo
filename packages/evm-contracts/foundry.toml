@@ -2,8 +2,10 @@
 src = "src"
 out = "out"
 libs = ["lib"]
+evm_version = "cancun"
 remappings = [
     "wormhole-foundation/=lib/wormhole/",
+    "wormhole/=lib/wormhole/",
     "@openzeppelin/=lib/openzeppelin-contracts/"
 ]
 
