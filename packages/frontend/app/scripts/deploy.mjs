@@ -1,6 +1,8 @@
 // src/deploy.mjs
 import { getInitialTestAccountsWallets } from '@aztec/accounts/testing';
-import { AztecAddress, Contract, createPXEClient, loadContractArtifact, waitForPXE } from '@aztec/aztec.js';
+import { AztecAddress } from '@aztec/aztec.js/addresses';
+import { Contract, loadContractArtifact } from '@aztec/aztec.js/contracts';
+import { createPXEClient, waitForPXE } from '@aztec/aztec.js/pxe';
 import EmitterJSON from "../artifacts/emitter-ZKPassportCredentialEmitter.json" assert { type: "json" };
 
 import { writeFileSync } from 'fs';
@@ -10,7 +12,7 @@ import { TokenContract } from '@aztec/noir-contracts.js/Token';
 
 const EmitterContractArtifact = loadContractArtifact(EmitterJSON);
 
-const { PXE_URL = 'http://localhost:8090' } = process.env;
+const { PXE_URL = 'https://devnet.aztec-labs.com' } = process.env;
 
 
 // Call `aztec-nargo compile` to compile the contract

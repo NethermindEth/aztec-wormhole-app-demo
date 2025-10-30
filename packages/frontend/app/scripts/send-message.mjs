@@ -1,6 +1,8 @@
 // src/send-message.mjs
 import { getInitialTestAccountsWallets } from '@aztec/accounts/testing';
-import { AztecAddress, Contract, createPXEClient, loadContractArtifact, waitForPXE } from '@aztec/aztec.js';
+import { AztecAddress } from '@aztec/aztec.js/addresses';
+import { Contract, loadContractArtifact } from '@aztec/aztec.js/contracts';
+import { createPXEClient, waitForPXE } from '@aztec/aztec.js/pxe';
 import EmitterJSON from "../artifacts/emitter-ZKPassportCredentialEmitter.json" assert { type: "json" };
 import { TokenContract } from '@aztec/noir-contracts.js/Token';
 import { readFileSync, writeFileSync } from 'fs';
@@ -9,7 +11,7 @@ import { dirname, join } from 'path';
 
 const EmitterContractArtifact = loadContractArtifact(EmitterJSON);
 
-const { PXE_URL = 'http://localhost:8090' } = process.env;
+const { PXE_URL = 'https://devnet.aztec-labs.com' } = process.env;
 
 // Read verification data passed from the API route
 function getVerificationData() {

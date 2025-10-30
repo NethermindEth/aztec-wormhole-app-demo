@@ -10,9 +10,9 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@aztec/accounts": "2.0.3",
-    "@aztec/aztec.js": "2.0.3",
-    "@aztec/noir-contracts.js": "2.0.3",
+    "@aztec/accounts": "3.0.0-devnet.2",
+    "@aztec/aztec.js": "3.0.0-devnet.2",
+    "@aztec/noir-contracts.js": "3.0.0-devnet.2",
     "@zkpassport/sdk": "0.10.0",
     "@zkpassport/utils": "^0.25.3",
     "next": "^16.0.0",
