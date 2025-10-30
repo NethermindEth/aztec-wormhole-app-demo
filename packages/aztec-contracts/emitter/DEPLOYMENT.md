@@ -18,10 +18,10 @@ The `ZKPassportCredentialEmitter` contract verifies ZK passport proofs and publi
 
 ```bash
 # Testnet configuration
-export NODE_URL=https://aztec-testnet-fullnode.zkv.xyz
-export SPONSORED_FPC_ADDRESS=0x299f255076aa461e4e94a843f0275303470a6b8ebe7cb44a471c66711151e529
-# FPC address valid as of v2.0.3; to fetch the latest run:
-# aztec get-canonical-sponsored-fpc-address
+export VERSION=3.0.0-devnet.2
+export NODE_URL=https://devnet.aztec-labs.com/
+aztec-up # pull the specified devnet image
+export SPONSORED_FPC_ADDRESS=$(aztec get-canonical-sponsored-fpc-address | awk '{print $NF}')
 
 # Owner private key
 export OWNER_SK=<private_key>
@@ -43,7 +43,7 @@ aztec-wallet create-account \
 
 ## FPC Registration
 
-### 3. Register Owner Wallet with FPC
+### 3a. Register Owner Wallet with FPC
 
 ```bash
 aztec-wallet register-contract \
@@ -54,6 +54,17 @@ aztec-wallet register-contract \
     --salt 0
 ```
 
+#### 3b. Register Sponsored FPC Contract in Local PXE Cache
+
+Register the canonical SponsoredFPC contract with your PXE so sponsored fee payments can be simulated successfully.
+
+```bash
+aztec-wallet register-contract \
+    $SPONSORED_FPC_ADDRESS SponsoredFPC \
+    --node-url $NODE_URL \
+    --alias sponsoredfpc
+```
+
 ## Account Deployment
 
 ### 4. Deploy Owner Account
@@ -61,9 +72,8 @@ aztec-wallet register-contract \
 > **Note**: You may encounter `Timeout awaiting isMined` errors due to network congestion, but this is normal. Continue with the next step once the transaction is verified on Aztecscan.
 
 ```bash
-aztec-wallet deploy-account \
+aztec-wallet deploy-account owner-wallet \
     --node-url $NODE_URL \
-    --from owner-wallet \
     --payment method=fpc-sponsored,fpc=contracts:sponsoredfpc
 ```
 
