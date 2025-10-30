@@ -21,9 +21,11 @@ packages/frontend/out/
 .env
 .env.local
 .env.*.local
+packages/go-relayer/.env
 
 # OS files
 .DS_Store
+package-lock.json
 Thumbs.db
 
 # IDE
@@ -44,4 +46,4 @@ packages/evm-contracts/broadcast/
 packages/evm-contracts/.gas-snapshot
 
 # Go
-packages/relayer/go.sum
+packages/go-relayer/go.sum
