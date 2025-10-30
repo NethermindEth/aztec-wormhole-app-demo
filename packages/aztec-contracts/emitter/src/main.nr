@@ -124,7 +124,7 @@ pub contract ZKPassportCredentialEmitter {
             1
         );
 
-        let bridge_address = AztecAddress::from_field(0x0d071eec273fa0c82825d9c5d2096965a40bcc33ae942714cf6c683af9632504); // TODO: confirm address, rename variable, remove hardcoding
+        let bridge_address = AztecAddress::from_field(0x0f3031b11cba7a2f57b1ef122f495a8779a741cfc8b42c45745cb47e68659f2a); // Receiver/bridge address for token transfers
 
         // 2. Perform zk Donation
         let _ = Token::at(token_address).transfer_in_private(
