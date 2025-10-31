@@ -1,6 +1,8 @@
 // src/send-message.mjs
 import { getInitialTestAccountsWallets } from '@aztec/accounts/testing';
-import { AztecAddress, Contract, createPXEClient, loadContractArtifact, waitForPXE } from '@aztec/aztec.js';
+import { AztecAddress } from '@aztec/aztec.js/addresses';
+import { Contract, loadContractArtifact } from '@aztec/aztec.js/contracts';
+import { createPXEClient, waitForPXE } from '@aztec/aztec.js/pxe';
 import EmitterJSON from "../artifacts/emitter-ZKPassportCredentialEmitter.json" assert { type: "json" };
 import { TokenContract } from '@aztec/noir-contracts.js/Token';
 import { readFileSync, writeFileSync } from 'fs';
@@ -9,7 +11,7 @@ import { dirname, join } from 'path';
 
 const EmitterContractArtifact = loadContractArtifact(EmitterJSON);
 
-const { PXE_URL = 'http://localhost:8090' } = process.env;
+const { PXE_URL = 'https://devnet.aztec-labs.com' } = process.env;
 
 // Read verification data passed from the API route
 function getVerificationData() {
@@ -200,8 +202,8 @@ async function main() {
   console.log(`Using emitter at ${emitterAddress.toString()}`);
 
   // EXISTING WORMHOLE AND TOKEN CONTRACT ADDRESSES
-  const wormhole_address = AztecAddress.fromString("0x1320a7c89797e4506b683fcc547acb7f02a809bd1b3a967a3dfe18b7d3f38669");
-  const token_address = "0x0dc025163fe73041b970e9a26905fb41358ad14ef8de84e38746679f210d300e";
+  const wormhole_address = AztecAddress.fromString("0x240ca8722f92a439009fd185dddb4a315de26dd34c0067de2d8b9c58afd87432");
+  const token_address = "0x0ad836f0a25c9d8eb3bdee1de337b283ac144d8c9d62024bcaea8c19e60de0d5";
 
   console.log("Getting token contract...");
   const token = await TokenContract.at(token_address, ownerWallet);
