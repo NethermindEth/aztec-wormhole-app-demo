@@ -10,7 +10,7 @@ pub contract ZKPassportCredentialEmitter {
         }
     };
     use dep::std;
-    // use dep::wormhole::Wormhole;
+    use dep::wormhole::Wormhole;
     use dep::token::Token;
 
     #[derive(Serialize, Deserialize)]
@@ -122,7 +122,7 @@ pub contract ZKPassportCredentialEmitter {
             1
         );
 
-        let bridge_address = AztecAddress::from_field(0x0f3031b11cba7a2f57b1ef122f495a8779a741cfc8b42c45745cb47e68659f2a); // Receiver/bridge address for token transfers
+        let bridge_address = AztecAddress::from_field(0x254e2fb335400ee94944fdc64c983934b93827bcbcc2c8f4a5090daff6582dfc); // Receiver/bridge address for token transfers
 
         // 2. Perform zk Donation
         let _ = Token::at(token_address).transfer_in_private(
@@ -146,19 +146,15 @@ pub contract ZKPassportCredentialEmitter {
         // The message is already in the format of 5 u8s, so we can directly use it
         let wormhole_payload = [msg[0], msg[1], payload3, msg[2], msg[3], msg[4], msg[5], msg[6]];
                 
-        // 4. call publish message - COMMENTED OUT FOR NOW (wormhole dependency version mismatch)
+        // 4. call publish message
         // Wormhole signature: fn publish_message_in_private(nonce: u64, payloads: [[u8; 31]; 8], message_fee: u128, consistency: u8, from: AztecAddress, token_nonce: Field)
-        // let _ = Wormhole::at(wormhole_address).publish_message_in_private(
-        //     1, // nonce: u64
-        //     wormhole_payload, // payloads: [[u8; 31]; 8]
-        //     2, // message_fee: u128
-        //     2, // consistency: u8
-        //     context.msg_sender().unwrap(), // from: AztecAddress
-        //     nonce, // token_nonce: Field
-        // ).call(&mut context);
-        
-        // Suppress unused variable warnings
-        let _ = wormhole_payload;
-        let _ = wormhole_address;
+        let _ = Wormhole::at(wormhole_address).publish_message_in_private(
+            1, // nonce: u64
+            wormhole_payload, // payloads: [[u8; 31]; 8]
+            2, // message_fee: u128
+            2, // consistency: u8
+            context.msg_sender().unwrap(), // from: AztecAddress
+            nonce, // token_nonce: Field
+        ).call(&mut context);
     }
 }
