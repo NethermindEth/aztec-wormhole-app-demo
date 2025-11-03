@@ -192,8 +192,9 @@ async function main() {
     console.log("Using addresses from addresses.json:", addresses);
   } catch (error) {
     // Fallback to hardcoded addresses
-    addresses = { 
-      emitter: "0x054aba4606088823379606da36c8f6c770bcfe1b38ed663256bec4eca8e0125c" 
+    addresses = {
+      emitter:
+        "0x196613afde5b604d105d2c9097ea64977d62ad7d060768c29c481a18a5a37793",
     };
     console.log("Using hardcoded addresses:", addresses);
   }
@@ -202,8 +203,11 @@ async function main() {
   console.log(`Using emitter at ${emitterAddress.toString()}`);
 
   // EXISTING WORMHOLE AND TOKEN CONTRACT ADDRESSES
-  const wormhole_address = AztecAddress.fromString("0x240ca8722f92a439009fd185dddb4a315de26dd34c0067de2d8b9c58afd87432");
-  const token_address = "0x0ad836f0a25c9d8eb3bdee1de337b283ac144d8c9d62024bcaea8c19e60de0d5";
+  const wormhole_address = AztecAddress.fromString(
+    "0x2f56338d0bf01e37b89edea0ee8e96474c89575aa5e6f35012789738a06ed0ac"
+  );
+  const token_address =
+    "0x14875b1ac670f8a6c732f43465e0b72ed81429a3c0593d11d26518e3ab9e63d6";
 
   console.log("Getting token contract...");
   const token = await TokenContract.at(token_address, ownerWallet);
