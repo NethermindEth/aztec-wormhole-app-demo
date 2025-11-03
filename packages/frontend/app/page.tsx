@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useRef, useState } from "react"
-import { ZKPassport, type ProofResult, EU_COUNTRIES, type QueryResult, type QueryResultErrors } from "@zkpassport/sdk"
+import { ZKPassport, type ProofResult, type QueryResult, type QueryResultErrors } from "@zkpassport/sdk"
 import QRCode from "react-qr-code"
 import { ZKPassportHelper, type ContractProofData } from "./ZKPassportHelper" // Adjust the import path as needed
 
@@ -81,7 +81,7 @@ export default function Home() {
       const queryBuilder = await zkPassportRef.current.request({
         name: "Obsidion Wallet",
         logo: window.location.origin + "/wallet-logo.png",
-        purpose: "Prove your personhood and EU citizenship to make a verified donation",
+        purpose: "Prove your personhood to make a verified donation",
         scope: serviceScope,
         mode: "fast",
         devMode: true,
@@ -98,7 +98,6 @@ export default function Home() {
         onReject, 
         onError 
       } = queryBuilder
-        .in("issuing_country", [...EU_COUNTRIES, "Zero Knowledge Republic"])
         .disclose("firstname")
         .gte("age", 18)
         .disclose("document_type")
@@ -157,7 +156,6 @@ export default function Home() {
 
         // Extract data from results (only for sending to API, not for display)
         const firstName = result?.firstname?.disclose?.result || ""
-        const isEUCitizen = result?.issuing_country?.in?.result || false
         const isOver18 = result?.age?.gte?.result || false
         const documentType = result?.document_type?.disclose?.result || ""
         
@@ -234,7 +232,6 @@ export default function Home() {
         const verificationData = {
           firstName: firstName,
           isOver18: isOver18,
-          isEUCitizen: isEUCitizen,
           documentType: documentType,
           uniqueIdentifier: uniqueIdentifier || "",
           amount: finalDonationAmount, // Use the locked amount
