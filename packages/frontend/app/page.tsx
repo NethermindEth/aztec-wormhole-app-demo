@@ -1,4 +1,6 @@
 "use client"
+// Import polyfills FIRST before any other imports
+import "./polyfills"
 import { useEffect, useRef, useState } from "react"
 import { ZKPassport, type ProofResult, type QueryResult, type QueryResultErrors } from "@zkpassport/sdk"
 import QRCode from "react-qr-code"
