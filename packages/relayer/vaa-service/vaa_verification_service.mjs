@@ -5,7 +5,8 @@ import { Contract, getContractInstanceFromInstantiationParams } from '@aztec/azt
 import { loadContractArtifact } from '@aztec/aztec.js/abi';
 import { createAztecNodeClient } from '@aztec/aztec.js/node';
 import { SponsoredFeePaymentMethod } from '@aztec/aztec.js/fee';
-import { getSchnorrAccount } from '@aztec/accounts/schnorr';
+import { AccountManager } from '@aztec/aztec.js/wallet';
+import { SchnorrAccountContract, getSchnorrAccountContractAddress } from '@aztec/accounts/schnorr';
 import { deriveSigningKey } from '@aztec/stdlib/keys';
 import { createPXE, getPXEConfig } from '@aztec/pxe/server';
 import { createStore } from "@aztec/kv-store/lmdb"
@@ -110,8 +111,25 @@ async function init() {
     console.log(`🧂 Using salt: ${salt.toString()}`);
     
     // Create Schnorr account (this account is already deployed on testnet)
-    const schnorrAccount = await getSchnorrAccount(pxe, secretKey, signingKey, salt);
-    const accountAddress = schnorrAccount.getAddress();
+    const accountContract = new SchnorrAccountContract(signingKey);
+    const walletContext = {
+      getChainInfo: async () => {
+        const { l1ChainId, rollupVersion } = await nodeClient.getNodeInfo();
+        return {
+          chainId: new Fr(l1ChainId),
+          version: new Fr(rollupVersion),
+        };
+      },
+    };
+    const accountManager = await AccountManager.create(walletContext, secretKey, accountContract, salt);
+    const completeAddress = await accountManager.getCompleteAddress();
+    const accountAddress = completeAddress.address;
+    await pxe.registerAccount(secretKey, completeAddress.partialAddress);
+
+    const expectedAddress = await getSchnorrAccountContractAddress(secretKey, salt, signingKey);
+    if (!accountAddress.equals(expectedAddress)) {
+      console.warn(`⚠️ Derived account address ${accountAddress.toString()} differs from expectation ${expectedAddress.toString()}`);
+    }
     console.log(`📍 Account address: ${accountAddress}`);
     
     // This account should already be registered with the PXE from the deployment
@@ -125,7 +143,7 @@ async function init() {
     }
     
     // Get wallet (this should work since the account exists on testnet)
-    const wallet = await schnorrAccount.register();
+    const wallet = await accountManager.getAccount();
     console.log(`✅ Using wallet: ${wallet.getAddress()}`);
     // Now create the contract object
     console.log(`🔄 Creating contract instance at ${contractAddress.toString()}...`);

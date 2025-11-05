@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@aztec/accounts": "2.0.4",
+    "@aztec/accounts": "3.0.0-devnet.4",
     "@aztec/aztec.js": "3.0.0-devnet.4",
     "@aztec/constants": "3.0.0-devnet.4",
     "@aztec/kv-store": "3.0.0-devnet.4",
