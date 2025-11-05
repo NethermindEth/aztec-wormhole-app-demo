@@ -9,7 +9,8 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "lint": "turbo run lint",
-    "clean": "turbo run clean"
+    "clean": "turbo run clean",
+    "copy:artifacts": "node ./scripts/copy-artifacts.mjs"
   },
   "workspaces": [
     "packages/*",

@@ -3,7 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "build": "aztec-nargo compile && node copy-artifacts.mjs",
+    "build": "aztec-nargo compile",
+    "copy:artifacts": "node ../../../scripts/copy-artifacts.mjs --only=wormhole",
+    "postbuild": "npm run copy:artifacts",
     "clean": "rm -rf target"
   }
 }
