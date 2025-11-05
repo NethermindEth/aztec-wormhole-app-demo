@@ -20,7 +20,6 @@ pub contract ZKPassportCredentialEmitter {
         vkey_c: [Field; 128],
         vkey_d: [Field; 128],
         vkey_e: [Field; 128],
-        vkey_f: [Field; 128],
     }
 
     #[derive(Serialize, Deserialize)]
@@ -30,7 +29,6 @@ pub contract ZKPassportCredentialEmitter {
         proof_c: [Field; 456],
         proof_d: [Field; 456],
         proof_e: [Field; 456],
-        proof_f: [Field; 456],
     }
 
     #[derive(Serialize, Deserialize)]
@@ -40,7 +38,6 @@ pub contract ZKPassportCredentialEmitter {
         input_c: [Field; 10],
         input_d: [Field; 5],
         input_e: [Field; 5],
-        input_f: [Field; 5],
     }
 
     #[derive(Serialize, Deserialize)]
@@ -50,7 +47,6 @@ pub contract ZKPassportCredentialEmitter {
         vkey_hash_c: Field,
         vkey_hash_d: Field,
         vkey_hash_e: Field,
-        vkey_hash_f: Field,
     }
 
     #[derive(Serialize, Deserialize)]
@@ -70,8 +66,8 @@ pub contract ZKPassportCredentialEmitter {
         amount: u128, // amount of tokens to be donated on chosen chainID
         nonce: Field
     ) {
-        // 1. verify zk passport proofs
-        // proof a,b has 2 public inputs
+        // 1. verify zk passport proofs (5 total)
+        // proof a,b have 2 public inputs
         std::verify_proof_with_type(
             contractProofData.vkeys.vkey_a,
             contractProofData.proofs.proof_a,
@@ -97,7 +93,7 @@ pub contract ZKPassportCredentialEmitter {
             1
         );
 
-        // proof d,e,f have 5 public inputs
+        // proof d,e have 5 public inputs
         std::verify_proof_with_type(
             contractProofData.vkeys.vkey_d,
             contractProofData.proofs.proof_d,
@@ -111,14 +107,6 @@ pub contract ZKPassportCredentialEmitter {
             contractProofData.proofs.proof_e,
             contractProofData.public_inputs.input_e,
             contractProofData.vkey_hashes.vkey_hash_e,
-            1
-        );
-
-        std::verify_proof_with_type(
-            contractProofData.vkeys.vkey_f,
-            contractProofData.proofs.proof_f,
-            contractProofData.public_inputs.input_f,
-            contractProofData.vkey_hashes.vkey_hash_f,
             1
         );
 

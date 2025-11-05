@@ -1,9 +1,7 @@
 // src/send-message.mjs
 import { getInitialTestAccountsWallets } from '@aztec/accounts/testing';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Contract, loadContractArtifact } from '@aztec/aztec.js/contracts';
-import { createPXEClient, waitForPXE } from '@aztec/aztec.js/pxe';
-import EmitterJSON from "../artifacts/emitter-ZKPassportCredentialEmitter.json" assert { type: "json" };
+import { AztecAddress, Contract, loadContractArtifact, createPXEClient, waitForPXE } from '@aztec/aztec.js';
+import EmitterJSON from "../artifacts/emitter-ZKPassportCredentialEmitter.json" with { type: "json" };
 import { TokenContract } from '@aztec/noir-contracts.js/Token';
 import { readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -47,6 +45,7 @@ function logFormattedProofs(formattedProofs) {
   console.log(`  vkey_b length: ${formattedProofs.vkeys.vkey_b.length}`);
   console.log(`  vkey_c length: ${formattedProofs.vkeys.vkey_c.length}`);
   console.log(`  vkey_d length: ${formattedProofs.vkeys.vkey_d.length}`);
+  console.log(`  vkey_e length: ${formattedProofs.vkeys.vkey_e.length}`);
 
   // Log proofs
   console.log("\n🔑 PROOFS:");
@@ -54,6 +53,7 @@ function logFormattedProofs(formattedProofs) {
   console.log(`  proof_b length: ${formattedProofs.proofs.proof_b.length}`);
   console.log(`  proof_c length: ${formattedProofs.proofs.proof_c.length}`);
   console.log(`  proof_d length: ${formattedProofs.proofs.proof_d.length}`);
+  console.log(`  proof_e length: ${formattedProofs.proofs.proof_e.length}`);
 
   // Log verification key hashes
   console.log("\n#️⃣ VERIFICATION KEY HASHES:");
@@ -61,6 +61,7 @@ function logFormattedProofs(formattedProofs) {
   console.log(`  vkey_hash_b: ${formattedProofs.vkey_hashes.vkey_hash_b.toString()}`);
   console.log(`  vkey_hash_c: ${formattedProofs.vkey_hashes.vkey_hash_c.toString()}`);
   console.log(`  vkey_hash_d: ${formattedProofs.vkey_hashes.vkey_hash_d.toString()}`);
+  console.log(`  vkey_hash_e: ${formattedProofs.vkey_hashes.vkey_hash_e.toString()}`);
 
   // Log public inputs
   console.log("\n📊 PUBLIC INPUTS:");
@@ -68,6 +69,7 @@ function logFormattedProofs(formattedProofs) {
   console.log(`  input_b: [${formattedProofs.public_inputs.input_b.map(x => x.toString()).join(', ')}]`);
   console.log(`  input_c: [${formattedProofs.public_inputs.input_c.map(x => x.toString()).join(', ')}]`);
   console.log(`  input_d: [${formattedProofs.public_inputs.input_d.map(x => x.toString()).join(', ')}]`);
+  console.log(`  input_e: [${formattedProofs.public_inputs.input_e.map(x => x.toString()).join(', ')}]`);
 
   // Log first few elements of each proof and vkey for debugging
   console.log("\n🔍 SAMPLE DATA (first 3 elements):");
@@ -194,13 +196,28 @@ async function main() {
     // Fallback to hardcoded addresses
     addresses = {
       emitter:
-        "0x196613afde5b604d105d2c9097ea64977d62ad7d060768c29c481a18a5a37793",
+        "0x0fedcd00aac5135e398be7492855b9cfef54dd7ae15275fc6f4d01ade88820a2",
     };
     console.log("Using hardcoded addresses:", addresses);
   }
 
   const emitterAddress = AztecAddress.fromString(addresses.emitter);
   console.log(`Using emitter at ${emitterAddress.toString()}`);
+
+  // Register the emitter contract with PXE if not already registered
+  try {
+    console.log("Registering emitter contract with PXE...");
+    const emitterInstance = await pxe.getContractInstance(emitterAddress);
+    
+    if (emitterInstance) {
+      console.log("✅ Emitter contract already registered with PXE");
+    } else {
+      console.log("⚠️  Emitter contract not found, attempting to register...");
+    }
+  } catch (error) {
+    console.log("⚠️  Could not verify emitter registration:", error.message);
+    console.log("   Continuing anyway - will fail later if contract is not accessible");
+  }
 
   // EXISTING WORMHOLE AND TOKEN CONTRACT ADDRESSES
   const wormhole_address = AztecAddress.fromString(
@@ -302,7 +319,10 @@ async function main() {
       token_address,        // Token contract address
       BigInt(userAmount),   // Amount
       token_nonce           // Token nonce
-    ).send({ authWitnesses: [wormholeWitness, donationWitness] }).wait();
+    ).send({ 
+      from: ownerWallet.getAddress(),
+      authWitnesses: [wormholeWitness, donationWitness] 
+    }).wait();
 
     console.log("Transaction sent! Hash:", tx.txHash);
     console.log("Block number:", tx.blockNumber);

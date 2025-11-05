@@ -90,6 +90,7 @@ export default function Home() {
       })
 
       // Build the query with your requirements
+      // This generates 5 proofs: A, B, C (automatic), E (disclose), F (age comparison)
       const { 
         url, 
         requestId,
@@ -194,20 +195,18 @@ export default function Home() {
         // Convert BigInt values to strings for JSON serialization
         const serializableProofData = contractProofData ? {
           vkeys: {
-            vkey_a: contractProofData.vkeys.vkey_a.map(v => v.toString()),
-            vkey_b: contractProofData.vkeys.vkey_b.map(v => v.toString()),
-            vkey_c: contractProofData.vkeys.vkey_c.map(v => v.toString()),
-            vkey_d: contractProofData.vkeys.vkey_d.map(v => v.toString()),
-            vkey_e: contractProofData.vkeys.vkey_e.map(v => v.toString()),
-            vkey_f: contractProofData.vkeys.vkey_f.map(v => v.toString()),
+            vkey_a: contractProofData.vkeys.vkey_a.map((v: bigint) => v.toString()),
+            vkey_b: contractProofData.vkeys.vkey_b.map((v: bigint) => v.toString()),
+            vkey_c: contractProofData.vkeys.vkey_c.map((v: bigint) => v.toString()),
+            vkey_d: contractProofData.vkeys.vkey_d.map((v: bigint) => v.toString()),
+            vkey_e: contractProofData.vkeys.vkey_e.map((v: bigint) => v.toString()),
           },
           proofs: {
-            proof_a: contractProofData.proofs.proof_a.map(p => p.toString()),
-            proof_b: contractProofData.proofs.proof_b.map(p => p.toString()),
-            proof_c: contractProofData.proofs.proof_c.map(p => p.toString()),
-            proof_d: contractProofData.proofs.proof_d.map(p => p.toString()),
-            proof_e: contractProofData.proofs.proof_e.map(p => p.toString()),
-            proof_f: contractProofData.proofs.proof_f.map(p => p.toString()),
+            proof_a: contractProofData.proofs.proof_a.map((p: bigint) => p.toString()),
+            proof_b: contractProofData.proofs.proof_b.map((p: bigint) => p.toString()),
+            proof_c: contractProofData.proofs.proof_c.map((p: bigint) => p.toString()),
+            proof_d: contractProofData.proofs.proof_d.map((p: bigint) => p.toString()),
+            proof_e: contractProofData.proofs.proof_e.map((p: bigint) => p.toString()),
           },
           vkey_hashes: {
             vkey_hash_a: contractProofData.vkey_hashes.vkey_hash_a.toString(),
@@ -215,15 +214,13 @@ export default function Home() {
             vkey_hash_c: contractProofData.vkey_hashes.vkey_hash_c.toString(),
             vkey_hash_d: contractProofData.vkey_hashes.vkey_hash_d.toString(),
             vkey_hash_e: contractProofData.vkey_hashes.vkey_hash_e.toString(),
-            vkey_hash_f: contractProofData.vkey_hashes.vkey_hash_f.toString(),
           },
           public_inputs: {
-            input_a: contractProofData.public_inputs.input_a.map(i => i.toString()),
-            input_b: contractProofData.public_inputs.input_b.map(i => i.toString()),
-            input_c: contractProofData.public_inputs.input_c.map(i => i.toString()),
-            input_d: contractProofData.public_inputs.input_d.map(i => i.toString()),
-            input_e: contractProofData.public_inputs.input_e.map(i => i.toString()),
-            input_f: contractProofData.public_inputs.input_f.map(i => i.toString()),
+            input_a: contractProofData.public_inputs.input_a.map((i: bigint) => i.toString()),
+            input_b: contractProofData.public_inputs.input_b.map((i: bigint) => i.toString()),
+            input_c: contractProofData.public_inputs.input_c.map((i: bigint) => i.toString()),
+            input_d: contractProofData.public_inputs.input_d.map((i: bigint) => i.toString()),
+            input_e: contractProofData.public_inputs.input_e.map((i: bigint) => i.toString()),
           },
         } : null;
 
