@@ -1,6 +1,11 @@
 // src/send-message.mjs
-import { getInitialTestAccountsWallets } from '@aztec/accounts/testing';
-import { AztecAddress, Contract, loadContractArtifact, createPXEClient, waitForPXE } from '@aztec/aztec.js';
+import { AztecAddress } from '@aztec/aztec.js/addresses';
+import { Contract } from '@aztec/aztec.js/contracts';
+import { loadContractArtifact } from '@aztec/aztec.js/abi';
+import { createAztecNodeClient } from '@aztec/aztec.js/node';
+import { Fr } from '@aztec/aztec.js/fields';
+import { createPXE, getPXEConfig } from '@aztec/pxe/server';
+import { createStore } from "@aztec/kv-store/lmdb";
 import EmitterJSON from "../artifacts/emitter-ZKPassportCredentialEmitter.json" with { type: "json" };
 import { TokenContract } from '@aztec/noir-contracts.js/Token';
 import { readFileSync, writeFileSync } from 'fs';
@@ -9,7 +14,7 @@ import { dirname, join } from 'path';
 
 const EmitterContractArtifact = loadContractArtifact(EmitterJSON);
 
-const { PXE_URL = 'https://devnet.aztec-labs.com' } = process.env;
+const { NODE_URL = 'https://devnet.aztec-labs.com' } = process.env;
 
 // Read verification data passed from the API route
 function getVerificationData() {
@@ -173,12 +178,22 @@ async function main() {
     console.log("⚠️  No formatted proofs found in verification data");
   }
   
-  // Connect to PXE
-  const pxe = createPXEClient(PXE_URL);
-  await waitForPXE(pxe);
-  console.log(`Connected to PXE at ${PXE_URL}`);
+  // Connect to Aztec node and create local PXE
+  console.log(`Connecting to Aztec node at ${NODE_URL}`);
+  const nodeClient = createAztecNodeClient(NODE_URL);
+  
+  // Create a temporary local PXE for this script execution
+  const store = await createStore('pxe_temp', {
+    dataDirectory: '.pxe_temp',
+    dataStoreMapSizeKB: 1e6,
+  });
+  const config = getPXEConfig();
+  const pxe = await createPXE(nodeClient, config, { store });
+  console.log(`Created local PXE connected to node at ${NODE_URL}`);
 
-  // Get wallets
+  // Get test account wallets
+  // Note: getInitialTestAccountsWallets still works with the new PXE
+  const { getInitialTestAccountsWallets } = await import('@aztec/accounts/testing');
   const [ownerWallet, receiverWallet] = await getInitialTestAccountsWallets(pxe);
   const ownerAddress = ownerWallet.getAddress();
   console.log(`Owner address: ${ownerAddress}`);

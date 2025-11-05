@@ -12,7 +12,10 @@
   "dependencies": {
     "@aztec/accounts": "3.0.0-devnet.3",
     "@aztec/aztec.js": "3.0.0-devnet.3",
+    "@aztec/kv-store": "3.0.0-devnet.3",
     "@aztec/noir-contracts.js": "3.0.0-devnet.3",
+    "@aztec/pxe": "3.0.0-devnet.3",
+    "@aztec/stdlib": "3.0.0-devnet.3",
     "buffer": "^6.0.3",
     "next": "^16.0.0",
     "process": "^0.11.10",
@@ -32,6 +35,7 @@
     "eslint-config-next": "^16.0.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.19.2",
     "typescript": "^5"
   }
 }

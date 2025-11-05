@@ -56,8 +56,14 @@ export async function POST(request: NextRequest) {
       }
       
       try {
+        // Use npx tsx to execute the script to handle ESM imports properly
+        // tsx is a TypeScript/ESM executor that resolves module imports correctly
+        const command = `npx tsx ${scriptPath}`;
+        
+        console.log(`Executing script with command: ${command}`);
+        
         // Execute your script with the verification data as an environment variable
-        const { stdout, stderr } = await execPromise(`node ${scriptPath}`, {
+        const { stdout, stderr } = await execPromise(command, {
           timeout: 120000, // 2 minute timeout
           env: {
             ...process.env,
