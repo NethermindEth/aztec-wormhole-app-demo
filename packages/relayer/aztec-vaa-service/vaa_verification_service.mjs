@@ -12,7 +12,7 @@ import { createPXE, getPXEConfig } from '@aztec/pxe/server';
 import { createStore } from "@aztec/kv-store/lmdb"
 import { SPONSORED_FPC_SALT } from '@aztec/constants';
 import { SponsoredFPCContract } from "@aztec/noir-contracts.js/SponsoredFPC";
-import WormholeJson from "./contracts/target/wormhole_contracts-Wormhole.json" with { type: "json" };
+import WormholeJson from "./artifacts/wormhole_contracts-Wormhole.json" with { type: "json" };
 import { ProxyLogger } from './utils.mjs';
 import dotenv from 'dotenv';
 
