@@ -45,3 +45,6 @@ packages/evm-contracts/.gas-snapshot
 
 # Go
 packages/relayer/go.sum
+
+# Aztec.js
+store/
