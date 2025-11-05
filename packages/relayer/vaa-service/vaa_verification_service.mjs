@@ -120,6 +120,12 @@ async function init() {
           version: new Fr(rollupVersion),
         };
       },
+      registerContract: async (instanceData, artifact) => {
+        return await pxe.registerContract({
+          instance: instanceData,
+          artifact,
+        });
+      },
     };
     const accountManager = await AccountManager.create(walletContext, secretKey, accountContract, salt);
     const completeAddress = await accountManager.getCompleteAddress();
@@ -150,7 +156,7 @@ async function init() {
     console.log(`📍 Contract artifact name: ${contractArtifact.name}`);
     
     try {
-      wormholeContract = await Contract.at(contractAddress, contractArtifact, wallet);
+      wormholeContract = new Contract(contractInstance, contractArtifact, wallet);
       console.log(`✅ Contract instance created successfully`);
       console.log(`📍 Final contract address: ${wormholeContract.address.toString()}`);
       
@@ -363,7 +369,7 @@ init().then(() => {
     console.log('Available endpoints:');
     console.log('  GET  /health - Health check');
     console.log('  POST /verify - Verify VAA on testnet');
-    console.log('  POST /test   - Test with Jorge\'s real Arbitrum Sepolia VAA');
+    console.log('  POST /test   - Test with real Arbitrum Sepolia VAA');
   });
 }).catch(error => {
   console.error('❌ Failed to start testnet service:', error);
