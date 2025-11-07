@@ -10,7 +10,8 @@
     "test": "turbo run test",
     "lint": "turbo run lint",
     "clean": "turbo run clean",
-    "copy:artifacts": "node ./scripts/copy-artifacts.mjs"
+    "export:token": "node ./scripts/export-token-artifact.mjs",
+    "copy:artifacts": "npm run export:token && node ./scripts/copy-artifacts.mjs"
   },
   "workspaces": [
     "packages/*",

@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "build": "aztec-nargo compile",
+    "build": "aztec-nargo compile && aztec-postprocess-contract",
     "copy:artifacts": "node ../../../scripts/copy-artifacts.mjs --only=emitter",
     "postbuild": "npm run copy:artifacts",
     "clean": "rm -rf target"

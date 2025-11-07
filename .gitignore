@@ -10,6 +10,7 @@ package-lock.json
 
 # Build outputs
 packages/aztec-contracts/emitter/target/
+packages/aztec-contracts/token-artifacts/
 packages/evm-contracts/out/
 packages/evm-contracts/cache/
 packages/evm-contracts/lib/

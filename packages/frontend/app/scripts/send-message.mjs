@@ -1,30 +1,82 @@
 // src/send-message.mjs
 import { AztecAddress } from '@aztec/aztec.js/addresses';
+import { Fr } from '@aztec/aztec.js/fields';
 import { Contract } from '@aztec/aztec.js/contracts';
 import { loadContractArtifact } from '@aztec/aztec.js/abi';
 import { createAztecNodeClient } from '@aztec/aztec.js/node';
-import { Fr } from '@aztec/aztec.js/fields';
 import { createPXE, getPXEConfig } from '@aztec/pxe/server';
 import { createStore } from "@aztec/kv-store/lmdb";
+import { AccountManager, BaseWallet } from '@aztec/aztec.js/wallet';
+import { SchnorrAccountContract, getSchnorrAccountContractAddress } from '@aztec/accounts/schnorr';
+import { deriveSigningKey } from '@aztec/stdlib/keys';
 import EmitterJSON from "../artifacts/emitter-ZKPassportCredentialEmitter.json" with { type: "json" };
-import { TokenContract } from '@aztec/noir-contracts.js/Token';
+import TokenJSON from "../artifacts/Token.json" with { type: "json" };
 import { readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const EmitterContractArtifact = loadContractArtifact(EmitterJSON);
 
-const { NODE_URL = 'https://devnet.aztec-labs.com' } = process.env;
+const { PXE_URL = 'https://devnet.aztec-labs.com' } = process.env;
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
+const SALT = process.env.SALT || '0x0000000000000000000000000000000000000000000000000000000000000000';
+
+class PXEWallet extends BaseWallet {
+  constructor(account, pxeInstance, aztecNode) {
+    super(pxeInstance, aztecNode);
+    this.account = account;
+  }
+
+  getAddress() {
+    return this.account.getAddress();
+  }
+
+  get address() {
+    return this.account.getAddress();
+  }
+
+  async getAccounts() {
+    const registered = await this.pxe.getRegisteredAccounts();
+    return registered.map(({ address }) => ({ item: address, alias: '' }));
+  }
+
+  async getAccountFromAddress(address) {
+    if (address.equals(this.account.getAddress())) {
+      return this.account;
+    }
+    throw new Error(`Account ${address.toString()} not loaded in wallet`);
+  }
+
+  async createAuthWit(intent, isPrivate) {
+    return await this.account.createAuthWit(intent, isPrivate);
+  }
+}
 
 // Read verification data passed from the API route
 function getVerificationData() {
-  if (!process.env.VERIFICATION_DATA) {
+  const { VERIFICATION_DATA_PATH, VERIFICATION_DATA } = process.env ?? {};
+
+  if (VERIFICATION_DATA_PATH) {
+    try {
+      const fileContents = readFileSync(VERIFICATION_DATA_PATH, 'utf8');
+      return JSON.parse(fileContents);
+    } catch (error) {
+      console.error("Error reading verification data file:", error);
+      return null;
+    }
+  }
+
+  if (!VERIFICATION_DATA) {
     console.log("No verification data found in environment variables");
     return null;
   }
-  
+
   try {
-    const encodedData = process.env.VERIFICATION_DATA;
+    const encodedData = VERIFICATION_DATA;
     const jsonStr = Buffer.from(encodedData, 'base64').toString('utf8');
     return JSON.parse(jsonStr);
   } catch (error) {
@@ -146,12 +198,15 @@ function debugArray(name, array) {
 
 function createMessageArrays(donationAddress, arbChainId, verificationData) {
   // Create arrays: [donationAddress, arbChainId, msg1, msg2, msg3, msg4, msg5]
-  const msgArrays = [donationAddress, arbChainId];
+  // Convert Uint8Arrays to regular arrays for contract serialization
+  const msgArrays = [
+    Array.from(donationAddress),
+    Array.from(arbChainId)
+  ];
   
   // Create 5 additional arrays for user data
   for (let i = 0; i < 5; i++) {
-    const arr = new Uint8Array(31);
-    arr.fill(0);
+    const arr = new Array(31).fill(0);
     msgArrays.push(arr);
   }
 
@@ -178,26 +233,64 @@ async function main() {
     console.log("⚠️  No formatted proofs found in verification data");
   }
   
-  // Connect to Aztec node and create local PXE
-  console.log(`Connecting to Aztec node at ${NODE_URL}`);
-  const nodeClient = createAztecNodeClient(NODE_URL);
-  
-  // Create a temporary local PXE for this script execution
-  const store = await createStore('pxe_temp', {
-    dataDirectory: '.pxe_temp',
+  // Connect to PXE
+  console.log('🔄 Connecting to Aztec node...');
+  const nodeClient = createAztecNodeClient(PXE_URL);
+  const store = await createStore('pxe', {
+    dataDirectory: 'store',
     dataStoreMapSizeKB: 1e6,
   });
   const config = getPXEConfig();
-  const pxe = await createPXE(nodeClient, config, { store });
-  console.log(`Created local PXE connected to node at ${NODE_URL}`);
+  const pxe = await createPXE(nodeClient, config, {
+    store,
+  });
+  console.log(`✅ Connected to PXE at ${PXE_URL}`);
 
-  // Get test account wallets
-  // Note: getInitialTestAccountsWallets still works with the new PXE
-  const { getInitialTestAccountsWallets } = await import('@aztec/accounts/testing');
-  const [ownerWallet, receiverWallet] = await getInitialTestAccountsWallets(pxe);
-  const ownerAddress = ownerWallet.getAddress();
-  console.log(`Owner address: ${ownerAddress}`);
-  console.log(`Receiver address: ${receiverWallet.getAddress()}`);
+  // Set up account wallet
+  if (!PRIVATE_KEY) {
+    throw new Error('PRIVATE_KEY environment variable is required');
+  }
+
+  console.log('🔄 Setting up account...');
+  const secretKey = Fr.fromString(PRIVATE_KEY);
+  const salt = Fr.fromString(SALT);
+  const signingKey = deriveSigningKey(secretKey);
+  
+  // Create Schnorr account
+  const accountContract = new SchnorrAccountContract(signingKey);
+  const accountManager = await AccountManager.create({
+    getChainInfo: async () => {
+      const { l1ChainId, rollupVersion } = await nodeClient.getNodeInfo();
+      return {
+        chainId: new Fr(l1ChainId),
+        version: new Fr(rollupVersion),
+      };
+    },
+    registerContract: async (instanceData, artifact) =>
+      pxe.registerContract({ instance: instanceData, artifact }),
+  }, secretKey, accountContract, salt);
+  
+  const completeAddress = await accountManager.getCompleteAddress();
+  const accountAddress = completeAddress.address;
+  const accountInstance = accountManager.getInstance();
+  const accountArtifact = await accountContract.getContractArtifact();
+  await pxe.registerContract({ instance: accountInstance, artifact: accountArtifact });
+  await pxe.registerAccount(secretKey, completeAddress.partialAddress);
+
+  const expectedAddress = await getSchnorrAccountContractAddress(secretKey, salt, signingKey);
+  if (!accountAddress.equals(expectedAddress)) {
+    console.warn(`⚠️ Derived account address ${accountAddress.toString()} differs from expectation ${expectedAddress.toString()}`);
+  }
+  
+  // Get wallet
+  const account = await accountManager.getAccount();
+  const ownerWallet = new PXEWallet(account, pxe, nodeClient);
+  const ownerAddress = ownerWallet.address;
+  console.log(`✅ Owner address: ${ownerAddress}`);
+  
+  // For receiver, we'll use the same address for now (you can add a second account if needed)
+  const receiverAddress = ownerAddress;
+  console.log(`✅ Receiver address: ${receiverAddress}`);
   
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = dirname(__filename);
@@ -219,30 +312,64 @@ async function main() {
   const emitterAddress = AztecAddress.fromString(addresses.emitter);
   console.log(`Using emitter at ${emitterAddress.toString()}`);
 
-  // Register the emitter contract with PXE if not already registered
-  try {
-    console.log("Registering emitter contract with PXE...");
-    const emitterInstance = await pxe.getContractInstance(emitterAddress);
-    
-    if (emitterInstance) {
-      console.log("✅ Emitter contract already registered with PXE");
-    } else {
-      console.log("⚠️  Emitter contract not found, attempting to register...");
-    }
-  } catch (error) {
-    console.log("⚠️  Could not verify emitter registration:", error.message);
-    console.log("   Continuing anyway - will fail later if contract is not accessible");
+  // Register the emitter contract with PXE
+  console.log("🔄 Registering emitter contract with PXE...");
+  const emitterInstance = await nodeClient.getContract(emitterAddress);
+  if (!emitterInstance) {
+    throw new Error(`Emitter contract instance not found at address ${emitterAddress.toString()}`);
   }
+  await pxe.registerContract({
+    instance: emitterInstance,
+    artifact: EmitterContractArtifact
+  });
+  console.log("✅ Emitter contract registered with PXE");
 
   // EXISTING WORMHOLE AND TOKEN CONTRACT ADDRESSES
   const wormhole_address = AztecAddress.fromString(
     "0x2f56338d0bf01e37b89edea0ee8e96474c89575aa5e6f35012789738a06ed0ac"
   );
-  const token_address =
-    "0x14875b1ac670f8a6c732f43465e0b72ed81429a3c0593d11d26518e3ab9e63d6";
+  const token_address = AztecAddress.fromString(
+    "0x14875b1ac670f8a6c732f43465e0b72ed81429a3c0593d11d26518e3ab9e63d6");
 
-  console.log("Getting token contract...");
-  const token = await TokenContract.at(token_address, ownerWallet);
+  // Register wormhole contract with PXE
+  console.log("🔄 Registering wormhole contract with PXE...");
+  const wormholeInstance = await nodeClient.getContract(wormhole_address);
+  if (!wormholeInstance) {
+    throw new Error(`Wormhole contract instance not found at address ${wormhole_address.toString()}`);
+  }
+  // Note: We would need the wormhole artifact here, but since we're just calling it, we might not need to register it
+  // If you have the WormholeJSON artifact, uncomment this:
+  // const WormholeArtifact = loadContractArtifact(WormholeJSON);
+  // await pxe.registerContract({
+  //   instance: wormholeInstance,
+  //   artifact: WormholeArtifact
+  // });
+  console.log("✅ Wormhole contract found");
+
+  // Get token contract
+  console.log("🔄 Getting token contract...");
+  const TokenArtifact = loadContractArtifact(TokenJSON);
+  const tokenInstance = await nodeClient.getContract(token_address);
+  if (!tokenInstance) {
+    throw new Error(`Token contract instance not found at address ${token_address.toString()}`);
+  }
+  
+  // Register just the instance with PXE (without artifact to avoid bytecode issues)
+  try {
+    const existingInstance = await pxe.getContractInstance(token_address);
+    if (!existingInstance) {
+      console.log("🔄 Registering token contract instance with PXE...");
+      await pxe.registerContract({ instance: tokenInstance });
+      console.log("✅ Token contract instance registered");
+    } else {
+      console.log("✅ Token contract already in PXE");
+    }
+  } catch (error) {
+    console.log("⚠️  Continuing without token registration:", error.message);
+  }
+
+  console.log("Creating token contract object...");
+  const token = new Contract(tokenInstance, TokenArtifact, ownerWallet);
 
   const noncePath = join(__dirname, '../assets/nonce.json');
   const nonce_file_data = JSON.parse(readFileSync(noncePath, 'utf8'));
@@ -262,7 +389,7 @@ async function main() {
   // First, set up the private auth witness for the Wormhole contract
   const tokenTransferAction = token.methods.transfer_in_private(
     ownerAddress, 
-    receiverWallet.getAddress(),
+    receiverAddress,
     2n,
     token_nonce  
   ); 
@@ -278,8 +405,8 @@ async function main() {
 
   // Now create the donation action and private auth witness with dynamic amount
   const donationAction = token.methods.transfer_in_private(
-    ownerWallet.getAddress(),
-    receiverWallet.getAddress(),
+    ownerWallet.address,
+    receiverAddress,
     BigInt(userAmount), // Use dynamic amount instead of hardcoded 35n
     token_nonce 
   );
@@ -290,8 +417,8 @@ async function main() {
     action: donationAction 
   });
 
-  console.log("Getting emitter contract...");
-  const contract = await Contract.at(emitterAddress, EmitterContractArtifact, ownerWallet);
+  console.log("Creating emitter contract object...");
+  const contract = new Contract(emitterInstance, EmitterContractArtifact, ownerWallet);
   
   // The vault address we want to appear in the logs
   const targetVaultAddress = "0x009cbB8f91d392856Cb880d67c806Aa731E3d686";
@@ -326,16 +453,28 @@ async function main() {
 
   console.log("Calling emitter verify_and_publish...");
   
+  // Use the formatted proofs directly as they were structured before
+  const proofData = verificationData?.formattedProofs;
+  
+  if (proofData) {
+    console.log("📊 Proof structure:");
+    console.log(`  vkey_a length: ${proofData.vkeys?.vkey_a?.length || 0}`);
+    console.log(`  proof_a length: ${proofData.proofs?.proof_a?.length || 0}`);
+    console.log(`  input_a length: ${proofData.public_inputs?.input_a?.length || 0}`);
+  } else {
+    console.log("⚠️  No proof data provided - using empty structure");
+  }
+  
   try {
     const tx = await contract.methods.verify_and_publish(
-      verificationData?.formattedProofs,
-      msgArrays,            // Message arrays (5 arrays of 31 bytes each)
+      proofData,
+      msgArrays,            // Message arrays (7 arrays of 31 bytes each)
       wormhole_address,     // Wormhole contract address
       token_address,        // Token contract address
       BigInt(userAmount),   // Amount
       token_nonce           // Token nonce
     ).send({ 
-      from: ownerWallet.getAddress(),
+      from: ownerWallet.address,
       authWitnesses: [wormholeWitness, donationWitness] 
     }).wait();
 

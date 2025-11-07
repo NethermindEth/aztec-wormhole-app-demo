@@ -18,11 +18,17 @@ const tasks = [
   {
     id: 'wormhole',
     label: 'Wormhole contract artifacts',
-    source: 'packages/aztec-contracts/wormhole/target',
+    source: 'packages/aztec/target',
     destinations: [
       'packages/frontend/app/artifacts',
       'packages/relayer/aztec-vaa-service/artifacts'
     ]
+  },
+  {
+    id: 'token',
+    label: 'Token contract artifacts',
+    source: 'packages/aztec-contracts/token-artifacts',
+    destinations: ['packages/frontend/app/artifacts']
   }
 ];
 

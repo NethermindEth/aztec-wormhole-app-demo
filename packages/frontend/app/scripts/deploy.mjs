@@ -1,8 +1,10 @@
 // src/deploy.mjs
-import { getInitialTestAccountsWallets } from '@aztec/accounts/testing';
+import { getInitialTestAccountsWallets } from '../../../../scripts/utils/testAccounts.mjs';
 import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Contract, loadContractArtifact } from '@aztec/aztec.js/contracts';
+import { Contract } from '@aztec/aztec.js/contracts';
+import { loadContractArtifact } from '@aztec/aztec.js/abi';
 import { createPXEClient, waitForPXE } from '@aztec/aztec.js/pxe';
+import { createAztecNodeClient } from '@aztec/aztec.js/node';
 import EmitterJSON from "../artifacts/emitter-ZKPassportCredentialEmitter.json" assert { type: "json" };
 
 import { writeFileSync } from 'fs';
@@ -12,7 +14,7 @@ import { TokenContract } from '@aztec/noir-contracts.js/Token';
 
 const EmitterContractArtifact = loadContractArtifact(EmitterJSON);
 
-const { PXE_URL = 'https://devnet.aztec-labs.com' } = process.env;
+const { PXE_URL = 'https://devnet.aztec-labs.com', NODE_URL = PXE_URL } = process.env;
 
 
 // Call `aztec-nargo compile` to compile the contract
@@ -51,10 +53,11 @@ export async function mintTokensToPrivate(
 async function main() {
   const pxe = createPXEClient(PXE_URL);
   await waitForPXE(pxe);
+  const nodeClient = createAztecNodeClient(NODE_URL);
 
   console.log(`Connected to PXE at ${PXE_URL}`);
 
-  const [ownerWallet, receiverWallet] = await getInitialTestAccountsWallets(pxe);
+  const [ownerWallet, receiverWallet] = await getInitialTestAccountsWallets(pxe, nodeClient);
   const ownerAddress = ownerWallet.getAddress();
 
   console.log(`Owner address: ${ownerAddress}`);
