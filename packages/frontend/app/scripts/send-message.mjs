@@ -56,6 +56,57 @@ class PXEWallet extends BaseWallet {
   }
 }
 
+// Ensure proof data structure matches contract requirements
+function ensureValidProofData(formattedProofs) {
+  // Helper to ensure array has exact length
+  const ensureFieldArray = (arr, targetLength) => {
+    if (!arr || !Array.isArray(arr)) {
+      return Array(targetLength).fill(0);
+    }
+    const result = arr.slice(0, targetLength);
+    while (result.length < targetLength) {
+      result.push(0);
+    }
+    return result.map(v => v ?? 0);
+  };
+
+  const ensureField = (value) => {
+    if (value === null || value === undefined) return 0;
+    return value;
+  };
+
+  return {
+    vkeys: {
+      vkey_a: ensureFieldArray(formattedProofs?.vkeys?.vkey_a, 128),
+      vkey_b: ensureFieldArray(formattedProofs?.vkeys?.vkey_b, 128),
+      vkey_c: ensureFieldArray(formattedProofs?.vkeys?.vkey_c, 128),
+      vkey_d: ensureFieldArray(formattedProofs?.vkeys?.vkey_d, 128),
+      vkey_e: ensureFieldArray(formattedProofs?.vkeys?.vkey_e, 128),
+    },
+    proofs: {
+      proof_a: ensureFieldArray(formattedProofs?.proofs?.proof_a, 456),
+      proof_b: ensureFieldArray(formattedProofs?.proofs?.proof_b, 456),
+      proof_c: ensureFieldArray(formattedProofs?.proofs?.proof_c, 456),
+      proof_d: ensureFieldArray(formattedProofs?.proofs?.proof_d, 456),
+      proof_e: ensureFieldArray(formattedProofs?.proofs?.proof_e, 456),
+    },
+    vkey_hashes: {
+      vkey_hash_a: ensureField(formattedProofs?.vkey_hashes?.vkey_hash_a),
+      vkey_hash_b: ensureField(formattedProofs?.vkey_hashes?.vkey_hash_b),
+      vkey_hash_c: ensureField(formattedProofs?.vkey_hashes?.vkey_hash_c),
+      vkey_hash_d: ensureField(formattedProofs?.vkey_hashes?.vkey_hash_d),
+      vkey_hash_e: ensureField(formattedProofs?.vkey_hashes?.vkey_hash_e),
+    },
+    public_inputs: {
+      input_a: ensureFieldArray(formattedProofs?.public_inputs?.input_a, 2),
+      input_b: ensureFieldArray(formattedProofs?.public_inputs?.input_b, 2),
+      input_c: ensureFieldArray(formattedProofs?.public_inputs?.input_c, 10),
+      input_d: ensureFieldArray(formattedProofs?.public_inputs?.input_d, 5),
+      input_e: ensureFieldArray(formattedProofs?.public_inputs?.input_e, 5),
+    },
+  };
+}
+
 // Read verification data passed from the API route
 function getVerificationData() {
   const { VERIFICATION_DATA_PATH, VERIFICATION_DATA } = process.env ?? {};
@@ -453,26 +504,28 @@ async function main() {
 
   console.log("Calling emitter verify_and_publish...");
   
-  // Use the formatted proofs directly as they were structured before
-  const proofData = verificationData?.formattedProofs;
+  // Ensure proof data has the correct structure and sizes
+  const validatedProofData = ensureValidProofData(verificationData?.formattedProofs);
   
-  if (proofData) {
-    console.log("📊 Proof structure:");
-    console.log(`  vkey_a length: ${proofData.vkeys?.vkey_a?.length || 0}`);
-    console.log(`  proof_a length: ${proofData.proofs?.proof_a?.length || 0}`);
-    console.log(`  input_a length: ${proofData.public_inputs?.input_a?.length || 0}`);
-  } else {
-    console.log("⚠️  No proof data provided - using empty structure");
-  }
+  console.log("📊 Validated proof structure:");
+  console.log(`  vkey_a length: ${validatedProofData.vkeys.vkey_a.length} (expected: 128)`);
+  console.log(`  proof_a length: ${validatedProofData.proofs.proof_a.length} (expected: 456)`);
+  console.log(`  input_a length: ${validatedProofData.public_inputs.input_a.length} (expected: 2)`);
+  console.log(`  vkey_a[0] type: ${typeof validatedProofData.vkeys.vkey_a[0]}`);
+  
+  console.log("\n📊 Message arrays:");
+  console.log(`  msgArrays length: ${msgArrays.length} (expected: 7)`);
+  console.log(`  msgArrays[0] length: ${msgArrays[0].length} (expected: 31)`);
+  console.log(`  msgArrays[0][0] type: ${typeof msgArrays[0][0]}`);
   
   try {
     const tx = await contract.methods.verify_and_publish(
-      proofData,
+      validatedProofData,   // Validated proof data with correct sizes
       msgArrays,            // Message arrays (7 arrays of 31 bytes each)
       wormhole_address,     // Wormhole contract address
       token_address,        // Token contract address
-      BigInt(userAmount),   // Amount
-      token_nonce           // Token nonce
+      BigInt(userAmount),   // Amount (u128)
+      new Fr(token_nonce)   // Token nonce (Field) - wrapped in Fr
     ).send({ 
       from: ownerWallet.address,
       authWitnesses: [wormholeWitness, donationWitness] 
