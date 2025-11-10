@@ -131,14 +131,21 @@ pub contract ZKPassportCredentialEmitter {
         let payload3: [u8; 31] = amount_field.to_le_bytes();
 
         // Payload Field 4-8: Message
-        // The message is already in the format of 5 u8s, so we can directly use it
-        let wormhole_payload = [msg[0], msg[1], payload3, msg[2], msg[3], msg[4], msg[5], msg[6]];
+        // The message is already in the format of 7 u8s (msg[0] through msg[6])
+        // Wormhole payload: [msg[0], msg[1], payload3, msg[2], msg[3], msg[4], msg[5], msg[6]]
                 
-        // 4. call publish message
-        // Wormhole signature: fn publish_message_in_private(nonce: u64, payloads: [[u8; 31]; 8], message_fee: u128, consistency: u8, from: AztecAddress, token_nonce: Field)
-        let _ = Wormhole::at(wormhole_address).publish_message_in_private(
+        // 4. call publish message with flat signature
+        // Wormhole signature: fn publish_message_in_private_flat(nonce: u64, payload_1-8: [u8; 31], message_fee: u128, consistency: u8, from: AztecAddress, token_nonce: Field)
+        let _ = Wormhole::at(wormhole_address).publish_message_in_private_flat(
             1, // nonce: u64
-            wormhole_payload, // payloads: [[u8; 31]; 8]
+            msg[0], // payload_1: [u8; 31]
+            msg[1], // payload_2: [u8; 31]
+            payload3, // payload_3: [u8; 31] (amount)
+            msg[2], // payload_4: [u8; 31]
+            msg[3], // payload_5: [u8; 31]
+            msg[4], // payload_6: [u8; 31]
+            msg[5], // payload_7: [u8; 31]
+            msg[6], // payload_8: [u8; 31]
             2, // message_fee: u128
             2, // consistency: u8
             context.msg_sender().unwrap(), // from: AztecAddress

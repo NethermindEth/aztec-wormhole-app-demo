@@ -355,7 +355,7 @@ async function main() {
     // Fallback to hardcoded addresses
     addresses = {
       emitter:
-        "0x0fedcd00aac5135e398be7492855b9cfef54dd7ae15275fc6f4d01ade88820a2",
+        "0x1562a477881c1b9b7f5bbc633e60736f56e17497e6f600ef403de64499df9154",
     };
     console.log("Using hardcoded addresses:", addresses);
   }
@@ -377,7 +377,7 @@ async function main() {
 
   // EXISTING WORMHOLE AND TOKEN CONTRACT ADDRESSES
   const wormhole_address = AztecAddress.fromString(
-    "0x2f56338d0bf01e37b89edea0ee8e96474c89575aa5e6f35012789738a06ed0ac"
+    "0x244d81d652fab696b4adbc9ec49fd9dbb28b73fac831db733128381cb089a000"
   );
   const token_address = AztecAddress.fromString(
     "0x14875b1ac670f8a6c732f43465e0b72ed81429a3c0593d11d26518e3ab9e63d6");
