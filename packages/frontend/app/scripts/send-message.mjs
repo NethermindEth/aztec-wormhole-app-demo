@@ -56,7 +56,7 @@ class PXEWallet extends BaseWallet {
   }
 }
 
-// Ensure proof data structure matches contract requirements
+// Ensure proof data structure matches contract requirements (FLATTENED)
 function ensureValidProofData(formattedProofs) {
   // Helper to ensure array has exact length
   const ensureFieldArray = (arr, targetLength) => {
@@ -75,35 +75,32 @@ function ensureValidProofData(formattedProofs) {
     return value;
   };
 
+  // Return flattened structure (no nested objects)
   return {
-    vkeys: {
-      vkey_a: ensureFieldArray(formattedProofs?.vkeys?.vkey_a, 128),
-      vkey_b: ensureFieldArray(formattedProofs?.vkeys?.vkey_b, 128),
-      vkey_c: ensureFieldArray(formattedProofs?.vkeys?.vkey_c, 128),
-      vkey_d: ensureFieldArray(formattedProofs?.vkeys?.vkey_d, 128),
-      vkey_e: ensureFieldArray(formattedProofs?.vkeys?.vkey_e, 128),
-    },
-    proofs: {
-      proof_a: ensureFieldArray(formattedProofs?.proofs?.proof_a, 456),
-      proof_b: ensureFieldArray(formattedProofs?.proofs?.proof_b, 456),
-      proof_c: ensureFieldArray(formattedProofs?.proofs?.proof_c, 456),
-      proof_d: ensureFieldArray(formattedProofs?.proofs?.proof_d, 456),
-      proof_e: ensureFieldArray(formattedProofs?.proofs?.proof_e, 456),
-    },
-    vkey_hashes: {
-      vkey_hash_a: ensureField(formattedProofs?.vkey_hashes?.vkey_hash_a),
-      vkey_hash_b: ensureField(formattedProofs?.vkey_hashes?.vkey_hash_b),
-      vkey_hash_c: ensureField(formattedProofs?.vkey_hashes?.vkey_hash_c),
-      vkey_hash_d: ensureField(formattedProofs?.vkey_hashes?.vkey_hash_d),
-      vkey_hash_e: ensureField(formattedProofs?.vkey_hashes?.vkey_hash_e),
-    },
-    public_inputs: {
-      input_a: ensureFieldArray(formattedProofs?.public_inputs?.input_a, 2),
-      input_b: ensureFieldArray(formattedProofs?.public_inputs?.input_b, 2),
-      input_c: ensureFieldArray(formattedProofs?.public_inputs?.input_c, 10),
-      input_d: ensureFieldArray(formattedProofs?.public_inputs?.input_d, 5),
-      input_e: ensureFieldArray(formattedProofs?.public_inputs?.input_e, 5),
-    },
+    // Vkeys
+    vkey_a: ensureFieldArray(formattedProofs?.vkeys?.vkey_a, 128),
+    vkey_b: ensureFieldArray(formattedProofs?.vkeys?.vkey_b, 128),
+    vkey_c: ensureFieldArray(formattedProofs?.vkeys?.vkey_c, 128),
+    vkey_d: ensureFieldArray(formattedProofs?.vkeys?.vkey_d, 128),
+    vkey_e: ensureFieldArray(formattedProofs?.vkeys?.vkey_e, 128),
+    // Proofs
+    proof_a: ensureFieldArray(formattedProofs?.proofs?.proof_a, 456),
+    proof_b: ensureFieldArray(formattedProofs?.proofs?.proof_b, 456),
+    proof_c: ensureFieldArray(formattedProofs?.proofs?.proof_c, 456),
+    proof_d: ensureFieldArray(formattedProofs?.proofs?.proof_d, 456),
+    proof_e: ensureFieldArray(formattedProofs?.proofs?.proof_e, 456),
+    // Vkey hashes
+    vkey_hash_a: ensureField(formattedProofs?.vkey_hashes?.vkey_hash_a),
+    vkey_hash_b: ensureField(formattedProofs?.vkey_hashes?.vkey_hash_b),
+    vkey_hash_c: ensureField(formattedProofs?.vkey_hashes?.vkey_hash_c),
+    vkey_hash_d: ensureField(formattedProofs?.vkey_hashes?.vkey_hash_d),
+    vkey_hash_e: ensureField(formattedProofs?.vkey_hashes?.vkey_hash_e),
+    // Public inputs
+    input_a: ensureFieldArray(formattedProofs?.public_inputs?.input_a, 2),
+    input_b: ensureFieldArray(formattedProofs?.public_inputs?.input_b, 2),
+    input_c: ensureFieldArray(formattedProofs?.public_inputs?.input_c, 10),
+    input_d: ensureFieldArray(formattedProofs?.public_inputs?.input_d, 5),
+    input_e: ensureFieldArray(formattedProofs?.public_inputs?.input_e, 5),
   };
 }
 
@@ -355,7 +352,7 @@ async function main() {
     // Fallback to hardcoded addresses
     addresses = {
       emitter:
-        "0x1562a477881c1b9b7f5bbc633e60736f56e17497e6f600ef403de64499df9154",
+        "0x03ac6e7ab598eceed84e36acf3513d5cb610b08c0b7c5641754b5acf11bbd954",
     };
     console.log("Using hardcoded addresses:", addresses);
   }
@@ -507,11 +504,11 @@ async function main() {
   // Ensure proof data has the correct structure and sizes
   const validatedProofData = ensureValidProofData(verificationData?.formattedProofs);
   
-  console.log("📊 Validated proof structure:");
-  console.log(`  vkey_a length: ${validatedProofData.vkeys.vkey_a.length} (expected: 128)`);
-  console.log(`  proof_a length: ${validatedProofData.proofs.proof_a.length} (expected: 456)`);
-  console.log(`  input_a length: ${validatedProofData.public_inputs.input_a.length} (expected: 2)`);
-  console.log(`  vkey_a[0] type: ${typeof validatedProofData.vkeys.vkey_a[0]}`);
+  console.log("📊 Validated proof structure (FLATTENED):");
+  console.log(`  vkey_a length: ${validatedProofData.vkey_a.length} (expected: 128)`);
+  console.log(`  proof_a length: ${validatedProofData.proof_a.length} (expected: 456)`);
+  console.log(`  input_a length: ${validatedProofData.input_a.length} (expected: 2)`);
+  console.log(`  vkey_a[0] type: ${typeof validatedProofData.vkey_a[0]}`);
   
   console.log("\n📊 Message arrays:");
   console.log(`  msgArrays length: ${msgArrays.length} (expected: 7)`);
