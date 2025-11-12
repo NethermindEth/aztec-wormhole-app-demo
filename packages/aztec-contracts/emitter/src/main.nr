@@ -13,48 +13,33 @@ pub contract ZKPassportCredentialEmitter {
     use dep::wormhole::Wormhole;
     use dep::token::Token;
 
+    // Flattened struct to avoid serialization overhead and ensure correct proof size
     #[derive(Serialize, Deserialize)]
-    struct vkeys {
+    pub struct ContractProofData {
+        // Vkeys - 640 fields total (5 x 128)
         vkey_a: [Field; 128],
         vkey_b: [Field; 128],
         vkey_c: [Field; 128],
         vkey_d: [Field; 128],
         vkey_e: [Field; 128],
-    }
-
-    #[derive(Serialize, Deserialize)]
-    struct proofs {
+        // Proofs - 2280 fields total (5 x 456)
         proof_a: [Field; 456],
         proof_b: [Field; 456],
         proof_c: [Field; 456],
         proof_d: [Field; 456],
         proof_e: [Field; 456],
-    }
-
-    #[derive(Serialize, Deserialize)]
-    struct public_inputs {
-        input_a: [Field; 2],
-        input_b: [Field; 2],
-        input_c: [Field; 10],
-        input_d: [Field; 5],
-        input_e: [Field; 5],
-    }
-
-    #[derive(Serialize, Deserialize)]
-    struct vkey_hashes {
+        // Vkey hashes - 5 fields
         vkey_hash_a: Field,
         vkey_hash_b: Field,
         vkey_hash_c: Field,
         vkey_hash_d: Field,
         vkey_hash_e: Field,
-    }
-
-    #[derive(Serialize, Deserialize)]
-    pub struct ContractProofData {
-        vkeys: vkeys,
-        proofs: proofs,
-        vkey_hashes: vkey_hashes,
-        public_inputs: public_inputs,
+        // Public inputs - 24 fields total (2+2+10+5+5)
+        input_a: [Field; 2],
+        input_b: [Field; 2],
+        input_c: [Field; 10],
+        input_d: [Field; 5],
+        input_e: [Field; 5],
     }
 
     #[external("private")]
@@ -69,44 +54,44 @@ pub contract ZKPassportCredentialEmitter {
         // 1. verify zk passport proofs (5 total)
         // proof a,b have 2 public inputs
         std::verify_proof_with_type(
-            contractProofData.vkeys.vkey_a,
-            contractProofData.proofs.proof_a,
-            contractProofData.public_inputs.input_a,
-            contractProofData.vkey_hashes.vkey_hash_a,
+            contractProofData.vkey_a,
+            contractProofData.proof_a,
+            contractProofData.input_a,
+            contractProofData.vkey_hash_a,
             1
         );
 
         std::verify_proof_with_type(
-            contractProofData.vkeys.vkey_b,
-            contractProofData.proofs.proof_b,
-            contractProofData.public_inputs.input_b,
-            contractProofData.vkey_hashes.vkey_hash_b,
+            contractProofData.vkey_b,
+            contractProofData.proof_b,
+            contractProofData.input_b,
+            contractProofData.vkey_hash_b,
             1
         );
 
         // proof c has 10 public inputs
         std::verify_proof_with_type(
-            contractProofData.vkeys.vkey_c,
-            contractProofData.proofs.proof_c,
-            contractProofData.public_inputs.input_c,
-            contractProofData.vkey_hashes.vkey_hash_c,
+            contractProofData.vkey_c,
+            contractProofData.proof_c,
+            contractProofData.input_c,
+            contractProofData.vkey_hash_c,
             1
         );
 
         // proof d,e have 5 public inputs
         std::verify_proof_with_type(
-            contractProofData.vkeys.vkey_d,
-            contractProofData.proofs.proof_d,
-            contractProofData.public_inputs.input_d,
-            contractProofData.vkey_hashes.vkey_hash_d,
+            contractProofData.vkey_d,
+            contractProofData.proof_d,
+            contractProofData.input_d,
+            contractProofData.vkey_hash_d,
             1
         );
 
         std::verify_proof_with_type(
-            contractProofData.vkeys.vkey_e,
-            contractProofData.proofs.proof_e,
-            contractProofData.public_inputs.input_e,
-            contractProofData.vkey_hashes.vkey_hash_e,
+            contractProofData.vkey_e,
+            contractProofData.proof_e,
+            contractProofData.input_e,
+            contractProofData.vkey_hash_e,
             1
         );
 
