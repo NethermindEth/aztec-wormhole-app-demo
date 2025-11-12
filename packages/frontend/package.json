@@ -10,12 +10,12 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@aztec/accounts": "3.0.0-devnet.4",
-    "@aztec/aztec.js": "3.0.0-devnet.4",
-    "@aztec/kv-store": "3.0.0-devnet.4",
-    "@aztec/noir-contracts.js": "3.0.0-devnet.4",
-    "@aztec/pxe": "3.0.0-devnet.4",
-    "@aztec/stdlib": "3.0.0-devnet.4",
+    "@aztec/accounts": "3.0.0-devnet.5",
+    "@aztec/aztec.js": "3.0.0-devnet.5",
+    "@aztec/kv-store": "3.0.0-devnet.5",
+    "@aztec/noir-contracts.js": "3.0.0-devnet.5",
+    "@aztec/pxe": "3.0.0-devnet.5",
+    "@aztec/stdlib": "3.0.0-devnet.5",
     "buffer": "^6.0.3",
     "next": "^16.0.0",
     "process": "^0.11.10",
