@@ -10,7 +10,7 @@ import { AccountManager, BaseWallet } from '@aztec/aztec.js/wallet';
 import { SchnorrAccountContract, getSchnorrAccountContractAddress } from '@aztec/accounts/schnorr';
 import { deriveSigningKey } from '@aztec/stdlib/keys';
 import EmitterJSON from "../artifacts/emitter-ZKPassportCredentialEmitter.json" with { type: "json" };
-import TokenJSON from "../artifacts/Token.json" with { type: "json" };
+import WormholeJSON from "../artifacts/wormhole_contracts-Wormhole.json" with { type: "json" };
 import { readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -356,7 +356,7 @@ async function main() {
     // Fallback to hardcoded addresses
     addresses = {
       emitter:
-        "0x0935f22c03f2900a63117f19c65dad6d5b5d41c36db4bc4eefeb8d12aaebf8dd",
+        "0x2382c8453771d7c2082e7de8a493518c8aeb03e6e19e1e717dfbf41793705c1b",
     };
     console.log("Using hardcoded addresses:", addresses);
   }
@@ -378,50 +378,56 @@ async function main() {
 
   // EXISTING WORMHOLE AND TOKEN CONTRACT ADDRESSES
   const wormhole_address = AztecAddress.fromString(
-    "0x270b1e10ef1bc8a6ad0aa3e5e008a8c33be4a4d397d97cd040d77bc41af83815"
+    "0x2b13cff4daef709134419f1506ccae28956e02102a5ef5f2d0077e4991a9f493"
   );
   const token_address = AztecAddress.fromString(
     "0x063cb1ad6d818724574328352263cbc8ae38c8c3d5b1ae3e0c0dcc1e58d772ac");
 
-  // Register wormhole contract with PXE
-  console.log("🔄 Registering wormhole contract with PXE...");
-  const wormholeInstance = await nodeClient.getContract(wormhole_address);
-  if (!wormholeInstance) {
-    throw new Error(`Wormhole contract instance not found at address ${wormhole_address.toString()}`);
-  }
-  // Note: We would need the wormhole artifact here, but since we're just calling it, we might not need to register it
-  // If you have the WormholeJSON artifact, uncomment this:
-  // const WormholeArtifact = loadContractArtifact(WormholeJSON);
-  // await pxe.registerContract({
-  //   instance: wormholeInstance,
-  //   artifact: WormholeArtifact
-  // });
-  console.log("✅ Wormhole contract found");
-
-  // Get token contract
-  console.log("🔄 Getting token contract...");
-  const TokenArtifact = loadContractArtifact(TokenJSON);
+  // Get and register token contract (following vaa_verification_service.mjs pattern)
+  console.log("🔄 Getting token contract instance from node...");
   const tokenInstance = await nodeClient.getContract(token_address);
   if (!tokenInstance) {
     throw new Error(`Token contract instance not found at address ${token_address.toString()}`);
   }
+  console.log("✅ Token contract instance retrieved from node");
   
-  // Register just the instance with PXE (without artifact to avoid bytecode issues)
-  try {
-    const existingInstance = await pxe.getContractInstance(token_address);
-    if (!existingInstance) {
-      console.log("🔄 Registering token contract instance with PXE...");
-      await pxe.registerContract({ instance: tokenInstance });
-      console.log("✅ Token contract instance registered");
-    } else {
-      console.log("✅ Token contract already in PXE");
-    }
-  } catch (error) {
-    console.log("⚠️  Continuing without token registration:", error.message);
-  }
-
-  console.log("Creating token contract object...");
+  // Load Token artifact from the standard Aztec contracts
+  console.log("🔄 Loading Token artifact...");
+  const { TokenContract } = await import('@aztec/noir-contracts.js/Token');
+  const TokenArtifact = TokenContract.artifact;
+  
+  // Register token contract with PXE (instance + artifact)
+  console.log("🔄 Registering token contract with PXE...");
+  await pxe.registerContract({
+    instance: tokenInstance,
+    artifact: TokenArtifact
+  });
+  console.log("✅ Token contract registered with PXE");
+  
+  // Create token contract object
+  console.log("🔄 Creating token contract object...");
   const token = new Contract(tokenInstance, TokenArtifact, ownerWallet);
+  console.log("✅ Token contract object created");
+
+  // Get and register wormhole contract
+  console.log("🔄 Getting wormhole contract instance from node...");
+  const wormholeInstance = await nodeClient.getContract(wormhole_address);
+  if (!wormholeInstance) {
+    throw new Error(`Wormhole contract instance not found at address ${wormhole_address.toString()}`);
+  }
+  console.log("✅ Wormhole contract instance retrieved from node");
+  
+  // Load Wormhole artifact from local JSON
+  console.log("🔄 Loading Wormhole artifact...");
+  const WormholeArtifact = loadContractArtifact(WormholeJSON);
+  
+  // Register wormhole contract with PXE (instance + artifact)
+  console.log("🔄 Registering wormhole contract with PXE...");
+  await pxe.registerContract({
+    instance: wormholeInstance,
+    artifact: WormholeArtifact
+  });
+  console.log("✅ Wormhole contract registered with PXE");
 
   const noncePath = join(__dirname, '../assets/nonce.json');
   const nonce_file_data = JSON.parse(readFileSync(noncePath, 'utf8'));
@@ -438,15 +444,20 @@ async function main() {
   writeFileSync(noncePath, JSON.stringify(new_nonce_data, null, 2));  
   console.log(`Using token nonce: ${token_nonce}`);
   
-  // First, set up the private auth witness for the Wormhole contract
+  // Both wormhole and emitter transfer to the same receiver/bridge address
+  const bridge_receiver_address = AztecAddress.fromString(
+    "0x254e2fb335400ee94944fdc64c983934b93827bcbcc2c8f4a5090daff6582dfc"
+  );
+  
+  // First authwit: Wormhole transfers message_fee (2 tokens) to receiver
   const tokenTransferAction = token.methods.transfer_in_private(
     ownerAddress, 
-    receiverAddress,
-    2n,
+    bridge_receiver_address,
+    2n,  // message_fee amount
     token_nonce  
   ); 
 
-  console.log("Generating private authwit for token transfer...");
+  console.log("Generating private authwit for wormhole message fee...");
   const wormholeWitness = await ownerWallet.createAuthWit(
     {
       caller: wormhole_address,
@@ -454,20 +465,24 @@ async function main() {
     },
     true
   );
-
-  // Now create the donation action and private auth witness with dynamic amount
+  
+  // Second authwit: Emitter transfers donation amount to bridge
+  // IMPORTANT: Must match exactly what the emitter contract will do
   const donationAction = token.methods.transfer_in_private(
     ownerWallet.address,
-    receiverAddress,
-    BigInt(userAmount), // Use dynamic amount instead of hardcoded 35n
+    bridge_receiver_address,  // Same receiver as wormhole
+    BigInt(userAmount), // Use dynamic amount from user input
     token_nonce 
   );
-  console.log(`Generating private authwit for donation of ${userAmount} tokens...`);
+  console.log(`Generating private authwit for donation of ${userAmount} tokens to bridge...`);
 
-  const donationWitness = await ownerWallet.createAuthWit({ 
-    caller: emitterAddress, 
-    action: donationAction 
-  });
+  const donationWitness = await ownerWallet.createAuthWit(
+    { 
+      caller: emitterAddress, 
+      action: donationAction 
+    },
+    true  // isPrivate = true for private transfers
+  );
 
   console.log("Creating emitter contract object...");
   const contract = new Contract(emitterInstance, EmitterContractArtifact, ownerWallet);

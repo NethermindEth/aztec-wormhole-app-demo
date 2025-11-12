@@ -27,7 +27,7 @@ const PORT = process.env.PORT || 3000;
 // DEVNET CONFIGURATION
 const NODE_URL = process.env.NODE_URL || 'https://devnet.aztec-labs.com/.';
 const PRIVATE_KEY = process.env.PRIVATE_KEY; // owner-wallet secret key from .env
-const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0x270b1e10ef1bc8a6ad0aa3e5e008a8c33be4a4d397d97cd040d77bc41af83815'; // Fresh Wormhole contract
+const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0x2b13cff4daef709134419f1506ccae28956e02102a5ef5f2d0077e4991a9f493'; // Fresh Wormhole contract
 const SALT = process.env.SALT || '0x0000000000000000000000000000000000000000000000000000000000000000'; // Salt used in deployment
 
 let pxe, nodeClient, wormholeContract, paymentMethod, isReady = false;

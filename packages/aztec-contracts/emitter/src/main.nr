@@ -142,7 +142,7 @@ pub contract ZKPassportCredentialEmitter {
             msg[4], // payload_6: [u8; 31]
             msg[5], // payload_7: [u8; 31]
             msg[6], // payload_8: [u8; 31]
-            2, // message_fee: u128
+            0, // message_fee: u128
             2, // consistency: u8
             context.msg_sender().unwrap(), // from: AztecAddress
             nonce, // token_nonce: Field

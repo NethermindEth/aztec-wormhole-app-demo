@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "turbo run dev --parallel",
-    "build": "turbo run build",
+    "build": "npm run build:contracts && turbo run build && npm run copy:artifacts",
+    "build:contracts": "cd packages/aztec-contracts && npm run build",
     "test": "turbo run test",
     "lint": "turbo run lint",
     "clean": "turbo run clean",

@@ -18,7 +18,7 @@ const tasks = [
   {
     id: 'wormhole',
     label: 'Wormhole contract artifacts',
-    source: 'packages/aztec/target',
+    source: 'packages/aztec-contracts/wormhole-source/aztec/contracts/target',
     destinations: [
       'packages/frontend/app/artifacts',
       'packages/relayer/aztec-vaa-service/artifacts'
