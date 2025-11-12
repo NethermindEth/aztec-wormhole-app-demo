@@ -48,8 +48,8 @@ export interface ContractProofData {
 }
 
 const ZKPASSPORT_CONFIG = {
-  PROOF_SIZE: 456, 
-  VKEY_SIZE: 128,
+  PROOF_SIZE: 508, 
+  VKEY_SIZE: 115,
   CHAIN_ID: 11155111,
   PROOF_KEYWORDS: {
     A: "sig_check_dsc", // Document Signer Certificate check

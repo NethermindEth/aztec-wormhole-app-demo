@@ -16,9 +16,9 @@ const __dirname = dirname(__filename);
 const repoRoot = resolve(__dirname, '..');
 
 try {
-  // Import TokenContract from the frontend's node_modules
-  const frontendNodeModules = resolve(repoRoot, 'packages/frontend/node_modules/@aztec/noir-contracts.js/dest/Token.js');
-  const { TokenContract } = await import(frontendNodeModules);
+  // Import TokenContract from the root node_modules (workspace setup)
+  const tokenModulePath = resolve(repoRoot, 'node_modules/@aztec/noir-contracts.js/dest/Token.js');
+  const { TokenContract } = await import(tokenModulePath);
 
   // Target directory for the exported artifact
   const targetDir = resolve(repoRoot, 'packages/aztec-contracts/token-artifacts');
