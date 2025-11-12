@@ -67,8 +67,8 @@ async function main() {
   const __dirname = dirname(__filename);
 
   // EXISTING WORMHOLE AND TOKEN CONTRACT ADDRESSES
-  const wormhole_address = AztecAddress.fromString("0x2f5ca4d8ed6a45cc2c3edd56ee10a2d613e5791d2646196a61d6d4ef65483691");
-  const token_address = "0x0ad836f0a25c9d8eb3bdee1de337b283ac144d8c9d62024bcaea8c19e60de0d5";
+  const wormhole_address = AztecAddress.fromString("0x270b1e10ef1bc8a6ad0aa3e5e008a8c33be4a4d397d97cd040d77bc41af83815");
+  const token_address = "0x063cb1ad6d818724574328352263cbc8ae38c8c3d5b1ae3e0c0dcc1e58d772ac";
 
   const emitter = await Contract.deploy(ownerWallet, EmitterContractArtifact, [AztecAddress.fromString(token_address)])
       .send()

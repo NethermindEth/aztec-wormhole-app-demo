@@ -356,7 +356,7 @@ async function main() {
     // Fallback to hardcoded addresses
     addresses = {
       emitter:
-        "0x03ac6e7ab598eceed84e36acf3513d5cb610b08c0b7c5641754b5acf11bbd954",
+        "0x0935f22c03f2900a63117f19c65dad6d5b5d41c36db4bc4eefeb8d12aaebf8dd",
     };
     console.log("Using hardcoded addresses:", addresses);
   }
@@ -378,10 +378,10 @@ async function main() {
 
   // EXISTING WORMHOLE AND TOKEN CONTRACT ADDRESSES
   const wormhole_address = AztecAddress.fromString(
-    "0x2f5ca4d8ed6a45cc2c3edd56ee10a2d613e5791d2646196a61d6d4ef65483691"
+    "0x270b1e10ef1bc8a6ad0aa3e5e008a8c33be4a4d397d97cd040d77bc41af83815"
   );
   const token_address = AztecAddress.fromString(
-    "0x14875b1ac670f8a6c732f43465e0b72ed81429a3c0593d11d26518e3ab9e63d6");
+    "0x063cb1ad6d818724574328352263cbc8ae38c8c3d5b1ae3e0c0dcc1e58d772ac");
 
   // Register wormhole contract with PXE
   console.log("🔄 Registering wormhole contract with PXE...");
