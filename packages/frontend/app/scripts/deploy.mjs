@@ -5,7 +5,7 @@ import { Contract } from '@aztec/aztec.js/contracts';
 import { loadContractArtifact } from '@aztec/aztec.js/abi';
 import { createPXEClient, waitForPXE } from '@aztec/aztec.js/pxe';
 import { createAztecNodeClient } from '@aztec/aztec.js/node';
-import EmitterJSON from "../artifacts/emitter-ZKPassportCredentialEmitter.json" assert { type: "json" };
+import EmitterJSON from "../artifacts/emitter-ZKPassportCredentialEmitter.json" with { type: "json" };
 
 import { writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
