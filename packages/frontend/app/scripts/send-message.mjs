@@ -374,7 +374,7 @@ async function main() {
 
   // EXISTING WORMHOLE AND TOKEN CONTRACT ADDRESSES
   const wormhole_address = AztecAddress.fromString(
-    "0x244d81d652fab696b4adbc9ec49fd9dbb28b73fac831db733128381cb089a000"
+    "0x2f5ca4d8ed6a45cc2c3edd56ee10a2d613e5791d2646196a61d6d4ef65483691"
   );
   const token_address = AztecAddress.fromString(
     "0x14875b1ac670f8a6c732f43465e0b72ed81429a3c0593d11d26518e3ab9e63d6");

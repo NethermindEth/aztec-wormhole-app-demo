@@ -18,9 +18,9 @@ The `ZKPassportCredentialEmitter` contract verifies ZK passport proofs and publi
 
 ```bash
 # Testnet configuration
-export VERSION=3.0.0-devnet.3
+export VERSION=3.0.0-devnet.5
 export NODE_URL=https://devnet.aztec-labs.com/
-aztec-up && docker pull aztecprotocol/aztec:$VERSION && docker tag aztecprotocol/aztec:$VERSION aztecprotocol/aztec:latest
+aztec-up 3.0.0-devnet.5
 export SPONSORED_FPC_ADDRESS=$(aztec get-canonical-sponsored-fpc-address | awk '{print $NF}')
 
 # Owner private key
