@@ -1,0 +1,37 @@
+{
+  "name": "aztec-interactoor",
+  "version": "0.1.0",
+  "description": "Educational playground for learning Aztec.js and smart contract development",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "cd contracts/counter && aztec-nargo compile && cd ../.. && node scripts/copy-artifacts.mjs",
+    "clean": "rm -rf target dist artifacts src/artifacts",
+    "test:connection": "node scripts/test-devnet.mjs",
+    "deploy:counter": "node scripts/deploy-counter.mjs",
+    "generate:keys": "node scripts/generate-keys.mjs",
+    "example:connect": "node examples/01-connect-sandbox.ts",
+    "example:accounts": "node examples/02-create-accounts.ts",
+    "example:deploy": "node examples/03-deploy-contract.ts",
+    "example:transactions": "node examples/04-send-transactions.ts",
+    "example:simulate": "node examples/05-simulate-functions.ts",
+    "example:emitter": "node examples/06-use-emitter.ts",
+    "example:full": "node examples/full-demo.ts"
+  },
+  "dependencies": {
+    "@aztec/aztec.js": "devnet",
+    "@aztec/accounts": "devnet",
+    "@aztec/noir-contracts.js": "devnet",
+    "@aztec/circuits.js": "devnet",
+    "@aztec/foundation": "devnet",
+    "@aztec/kv-store": "devnet",
+    "@aztec/pxe": "devnet",
+    "@aztec/test-wallet": "devnet"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3",
+    "ts-node": "^10.9.2"
+  }
+}
+
