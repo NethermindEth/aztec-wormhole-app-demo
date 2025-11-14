@@ -12,9 +12,11 @@ import { deriveSigningKey } from '@aztec/stdlib/keys';
 import EmitterJSON from "../artifacts/emitter-ZKPassportCredentialEmitter.json" with { type: "json" };
 import WormholeJSON from "../artifacts/wormhole_contracts-Wormhole.json" with { type: "json" };
 import { readFileSync, writeFileSync } from 'fs';
+import { mkdir, writeFile } from 'fs/promises';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import dotenv from 'dotenv';
+import { serializePrivateExecutionSteps } from '@aztec/stdlib/kernel';
 
 // Load environment variables
 dotenv.config();
@@ -24,6 +26,27 @@ const EmitterContractArtifact = loadContractArtifact(EmitterJSON);
 const { PXE_URL = 'https://devnet.aztec-labs.com' } = process.env;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const SALT = process.env.SALT || '0x0000000000000000000000000000000000000000000000000000000000000000';
+
+async function captureProfile(
+  interaction,
+  opts,
+  label
+) {
+  const result = await interaction.profile({
+    ...opts,
+    profileMode: "full",
+    skipProofGeneration: true,
+  });
+  const ivcFolder = process.env.CAPTURE_IVC_FOLDER ?? "ivc";
+  const resultsDirectory = join(ivcFolder, label);
+  await mkdir(resultsDirectory, { recursive: true });
+  const ivcInputsPath = join(resultsDirectory, "ivc-inputs.msgpack");
+  await writeFile(
+    ivcInputsPath,
+    serializePrivateExecutionSteps(result.executionSteps)
+  );
+}
+
 
 class PXEWallet extends BaseWallet {
   constructor(account, pxeInstance, aztecNode) {
@@ -60,14 +83,13 @@ class PXEWallet extends BaseWallet {
 function ensureValidProofData(formattedProofs) {
   // Helper to ensure array has exact length
   const ensureFieldArray = (arr, targetLength) => {
-    if (!arr || !Array.isArray(arr)) {
-      return Array(targetLength).fill(0);
-    }
-    const result = arr.slice(0, targetLength);
-    while (result.length < targetLength) {
-      result.push(0);
-    }
-    return result.map(v => v ?? 0);
+      if (!arr || !Array.isArray(arr)) {
+        throw new Error("Invalid field array");
+      }
+      if(arr.length !== targetLength) {
+        throw new Error(`Invalid array length, expected ${targetLength}, got ${arr.length}`)
+      }
+      return arr;
   };
 
   const ensureField = (value) => {
@@ -101,9 +123,9 @@ function ensureValidProofData(formattedProofs) {
     public_inputs: {
       input_a: ensureFieldArray(formattedProofs?.public_inputs?.input_a, 2),
       input_b: ensureFieldArray(formattedProofs?.public_inputs?.input_b, 2),
-      input_c: ensureFieldArray(formattedProofs?.public_inputs?.input_c, 10),
-      input_d: ensureFieldArray(formattedProofs?.public_inputs?.input_d, 5),
-      input_e: ensureFieldArray(formattedProofs?.public_inputs?.input_e, 5),
+      input_c: ensureFieldArray(formattedProofs?.public_inputs?.input_c, 2),
+      input_d: ensureFieldArray(formattedProofs?.public_inputs?.input_d, 7),
+      input_e: ensureFieldArray(formattedProofs?.public_inputs?.input_e, 7),
     }
   };
 }
@@ -337,6 +359,7 @@ async function main() {
   // Get wallet
   const account = await accountManager.getAccount();
   const ownerWallet = new PXEWallet(account, pxe, nodeClient);
+  await ownerWallet.registerSender(AztecAddress.fromString("0x2855f4f080719515527be45a7eb93557608ea4cf112d7b84820937fedd6cf485"))
   const ownerAddress = ownerWallet.address;
   console.log(`✅ Owner address: ${ownerAddress}`);
   
@@ -356,7 +379,7 @@ async function main() {
     // Fallback to hardcoded addresses
     addresses = {
       emitter:
-        "0x2382c8453771d7c2082e7de8a493518c8aeb03e6e19e1e717dfbf41793705c1b",
+        "0x120512f50ab2911ab7e5bb2dde067606b19dc26c22e34f6c2c5b6f3905ef3a3c",
     };
     console.log("Using hardcoded addresses:", addresses);
   }
@@ -522,12 +545,16 @@ async function main() {
   
   // Ensure proof data has the correct structure and sizes
   const validatedProofData = ensureValidProofData(verificationData?.formattedProofs);
+
+  for(let i of ['a', 'b', 'c', 'd', 'e']){
+    console.log("📊 Validated proof structure (NESTED, UltraHonk):");
+    console.log(`  vkey_a length: ${validatedProofData.vkeys[`vkey_${i}`].length} (expected: 115)`);
+    console.log(`  proof_a length: ${validatedProofData.proofs[`proof_${i}`].length} (expected: 508)`);
+    console.log(`  input_a length: ${validatedProofData.public_inputs[`input_${i}`].length} (expected: 2)`);
+    console.log(`  vkey_a[0] type: ${typeof validatedProofData.vkeys[`vkey_${i}`][0]}`);
+  }
   
-  console.log("📊 Validated proof structure (NESTED, UltraHonk):");
-  console.log(`  vkey_a length: ${validatedProofData.vkeys.vkey_a.length} (expected: 115)`);
-  console.log(`  proof_a length: ${validatedProofData.proofs.proof_a.length} (expected: 508)`);
-  console.log(`  input_a length: ${validatedProofData.public_inputs.input_a.length} (expected: 2)`);
-  console.log(`  vkey_a[0] type: ${typeof validatedProofData.vkeys.vkey_a[0]}`);
+
   
   console.log("\n📊 Message arrays:");
   console.log(`  msgArrays length: ${msgArrays.length} (expected: 7)`);
@@ -535,17 +562,23 @@ async function main() {
   console.log(`  msgArrays[0][0] type: ${typeof msgArrays[0][0]}`);
   
   try {
-    const tx = await contract.methods.verify_and_publish(
+    const interaction = await contract.methods.verify_and_publish(
       validatedProofData,   // Validated proof data with correct sizes
       msgArrays,            // Message arrays (7 arrays of 31 bytes each)
       wormhole_address,     // Wormhole contract address
       token_address,        // Token contract address
       BigInt(userAmount),   // Amount (u128)
       new Fr(token_nonce)   // Token nonce (Field) - wrapped in Fr
-    ).send({ 
+    );
+    
+    const options = { 
       from: ownerWallet.address,
       authWitnesses: [wormholeWitness, donationWitness] 
-    }).wait();
+    };
+
+    await captureProfile(interaction, options, "verify_and_publish");
+    
+    await interaction.send(options).wait();
 
     console.log("Transaction sent! Hash:", tx.txHash);
     console.log("Block number:", tx.blockNumber);

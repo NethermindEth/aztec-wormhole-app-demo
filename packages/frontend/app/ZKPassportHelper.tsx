@@ -12,43 +12,43 @@ import {
   ultraVkToFields,
   getNumberOfPublicInputs,
   CircuitManifest,
-} from "@zkpassport/utils"
-import { RegistryClient } from "@zkpassport/registry"
-import assert from "assert"
+} from "@zkpassport/utils";
+import { RegistryClient } from "@zkpassport/registry";
+import assert from "assert";
 
 export interface ContractProofData {
   vkeys: {
-    vkey_a: bigint[]
-    vkey_b: bigint[]
-    vkey_c: bigint[]
-    vkey_d: bigint[]
-    vkey_e: bigint[]
-  }
+    vkey_a: bigint[];
+    vkey_b: bigint[];
+    vkey_c: bigint[];
+    vkey_d: bigint[];
+    vkey_e: bigint[];
+  };
   proofs: {
-    proof_a: bigint[]
-    proof_b: bigint[]
-    proof_c: bigint[]
-    proof_d: bigint[]
-    proof_e: bigint[]
-  }
+    proof_a: bigint[];
+    proof_b: bigint[];
+    proof_c: bigint[];
+    proof_d: bigint[];
+    proof_e: bigint[];
+  };
   vkey_hashes: {
-    vkey_hash_a: bigint
-    vkey_hash_b: bigint
-    vkey_hash_c: bigint
-    vkey_hash_d: bigint
-    vkey_hash_e: bigint
-  }
+    vkey_hash_a: bigint;
+    vkey_hash_b: bigint;
+    vkey_hash_c: bigint;
+    vkey_hash_d: bigint;
+    vkey_hash_e: bigint;
+  };
   public_inputs: {
-    input_a: bigint[]
-    input_b: bigint[]
-    input_c: bigint[]
-    input_d: bigint[]
-    input_e: bigint[]
-  }
+    input_a: bigint[];
+    input_b: bigint[];
+    input_c: bigint[];
+    input_d: bigint[];
+    input_e: bigint[];
+  };
 }
 
 const ZKPASSPORT_CONFIG = {
-  PROOF_SIZE: 508, 
+  PROOF_SIZE: 508,
   VKEY_SIZE: 115,
   CHAIN_ID: 11155111,
   PROOF_KEYWORDS: {
@@ -62,38 +62,40 @@ const ZKPASSPORT_CONFIG = {
   PUBLIC_INPUT_SIZES: {
     input_a: 2,
     input_b: 2,
-    input_c: 10,
-    input_d: 5,
-    input_e: 5,
+    input_c: 2,
+    input_d: 7,
+    input_e: 7,
   },
-} as const
+} as const;
 
-type CircuitType = "A" | "B" | "C" | "D" | "E"
+type CircuitType = "A" | "B" | "C" | "D" | "E";
 
 type SubCircuitProof = {
-  vkey: bigint[]
-  proof: bigint[]
-  public_inputs: bigint[]
-  vkey_hash: bigint
-  commitments: bigint[]
-}
+  vkey: bigint[];
+  proof: bigint[];
+  public_inputs: bigint[];
+  vkey_hash: bigint;
+  commitments: bigint[];
+};
 
 /**
  * ZKPassportHelper class provides methods for working with zkPassport proofs
  * and preparing them for use with Aztec contracts.
  */
 export class ZKPassportHelper {
-  private static readonly PROOF_SIZE = ZKPASSPORT_CONFIG.PROOF_SIZE
-  private static readonly VKEY_SIZE = ZKPASSPORT_CONFIG.VKEY_SIZE
-  private static readonly CHAIN_ID = ZKPASSPORT_CONFIG.CHAIN_ID
-  private static readonly registryClient = new RegistryClient({ chainId: ZKPASSPORT_CONFIG.CHAIN_ID })
-  private static circuitManifest: CircuitManifest
+  private static readonly PROOF_SIZE = ZKPASSPORT_CONFIG.PROOF_SIZE;
+  private static readonly VKEY_SIZE = ZKPASSPORT_CONFIG.VKEY_SIZE;
+  private static readonly CHAIN_ID = ZKPASSPORT_CONFIG.CHAIN_ID;
+  private static readonly registryClient = new RegistryClient({
+    chainId: ZKPASSPORT_CONFIG.CHAIN_ID,
+  });
+  private static circuitManifest: CircuitManifest;
 
   private static validateProofData(
-    vkey: bigint[], 
-    formattedProofData: bigint[], 
-    publicInputs: bigint[], 
-    commitments: bigint[], 
+    vkey: bigint[],
+    formattedProofData: bigint[],
+    publicInputs: bigint[],
+    commitments: bigint[],
     circuitType: CircuitType
   ): void {
     // Log actual sizes for debugging
@@ -101,57 +103,78 @@ export class ZKPassportHelper {
       vkeySize: vkey.length,
       proofSize: formattedProofData.length,
       publicInputsSize: publicInputs.length,
-      commitmentsSize: commitments.length
-    })
-    
+      commitmentsSize: commitments.length,
+    });
+
     // Validate vkey exists and has reasonable size (flexible validation)
     if (!vkey || vkey.length === 0 || vkey.length > 200) {
-      throw new Error(`Invalid vkey size for circuit ${circuitType}: got ${vkey.length}, expected between 1 and 200`)
+      throw new Error(
+        `Invalid vkey size for circuit ${circuitType}: got ${vkey.length}, expected between 1 and 200`
+      );
     }
-    
+
     // Validate proof exists and has reasonable size (flexible validation)
-    if (!formattedProofData || formattedProofData.length === 0 || formattedProofData.length > 600) {
-      throw new Error(`Invalid proof size for circuit ${circuitType}: got ${formattedProofData.length}, expected between 1 and 600`)
+    if (!formattedProofData || formattedProofData.length !== 508) {
+      throw new Error(
+        `Invalid proof size for circuit ${circuitType}: got ${formattedProofData.length}, expected between 1 and 600`
+      );
     }
-    
+
     // Validate public inputs (keep strict but allow observed sizes)
     // Observed sizes: A=2, B=2, C=2, D=7, E=5
     if (![2, 5, 7, 10].includes(publicInputs.length)) {
-      throw new Error(`Invalid public inputs size for circuit ${circuitType}: expected 2, 5, 7, or 10, got ${publicInputs.length}`)
+      throw new Error(
+        `Invalid public inputs size for circuit ${circuitType}: expected 2, 5, 7, or 10, got ${publicInputs.length}`
+      );
     }
-    
+
     // Validate commitments (keep strict)
     if (commitments.length !== 2) {
-      throw new Error(`Invalid commitments size for circuit ${circuitType}: expected 2, got ${commitments.length}`)
+      throw new Error(
+        `Invalid commitments size for circuit ${circuitType}: expected 2, got ${commitments.length}`
+      );
     }
   }
 
   private static logError(context: string, error: unknown): void {
-    console.error(`Error in ${context}:`, error)
+    console.error(`Error in ${context}:`, error);
     if (error instanceof Error) {
-      console.error("Error message:", error.message)
-      console.error("Error stack:", error.stack)
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
     }
   }
 
   private static findProofsByKeywords(proofs: ProofResult[]): {
-    proofA: ProofResult | undefined,
-    proofB: ProofResult | undefined,
-    proofC: ProofResult | undefined,
-    proofD: ProofResult | undefined,
-    proofE: ProofResult | undefined
+    proofA: ProofResult | undefined;
+    proofB: ProofResult | undefined;
+    proofC: ProofResult | undefined;
+    proofD: ProofResult | undefined;
+    proofE: ProofResult | undefined;
   } {
     const proofKeywords = ZKPASSPORT_CONFIG.PROOF_KEYWORDS;
-    
+
     console.log("Looking for proofs with keywords:", proofKeywords);
-    console.log("Available proof names:", proofs.map(p => p.name));
-    
+    console.log(
+      "Available proof names:",
+      proofs.map((p) => p.name)
+    );
+
     return {
-      proofA: proofs.find((p) => p.name?.toLowerCase().includes(proofKeywords.A.toLowerCase())),
-      proofB: proofs.find((p) => p.name?.toLowerCase().includes(proofKeywords.B.toLowerCase())),
-      proofC: proofs.find((p) => p.name?.toLowerCase().includes(proofKeywords.C.toLowerCase())),
-      proofD: proofs.find((p) => p.name?.toLowerCase().includes(proofKeywords.D.toLowerCase())),
-      proofE: proofs.find((p) => p.name?.toLowerCase().includes(proofKeywords.E.toLowerCase()))
+      proofA: proofs.find((p) =>
+        p.name?.toLowerCase().includes(proofKeywords.A.toLowerCase())
+      ),
+      proofB: proofs.find((p) =>
+        p.name?.toLowerCase().includes(proofKeywords.B.toLowerCase())
+      ),
+      proofC: proofs.find((p) =>
+        p.name?.toLowerCase().includes(proofKeywords.C.toLowerCase())
+      ),
+      proofD: proofs.find((p) =>
+        p.name?.toLowerCase().includes(proofKeywords.D.toLowerCase())
+      ),
+      proofE: proofs.find((p) =>
+        p.name?.toLowerCase().includes(proofKeywords.E.toLowerCase())
+      ),
     };
   }
 
@@ -166,28 +189,37 @@ export class ZKPassportHelper {
     ];
 
     const detectedOrder = proofs.map((proof) => {
-      const name = proof.name?.toLowerCase()
-      if (name?.includes(proofKeywords.A.toLowerCase())) return proofKeywords.A
-      if (name?.includes(proofKeywords.B.toLowerCase())) return proofKeywords.B
-      if (name?.includes(proofKeywords.C.toLowerCase())) return proofKeywords.C
-      if (name?.includes(proofKeywords.D.toLowerCase())) return proofKeywords.D
-      if (name?.includes(proofKeywords.E.toLowerCase())) return proofKeywords.E
-      return "unknown"
+      const name = proof.name?.toLowerCase();
+      if (name?.includes(proofKeywords.A.toLowerCase())) return proofKeywords.A;
+      if (name?.includes(proofKeywords.B.toLowerCase())) return proofKeywords.B;
+      if (name?.includes(proofKeywords.C.toLowerCase())) return proofKeywords.C;
+      if (name?.includes(proofKeywords.D.toLowerCase())) return proofKeywords.D;
+      if (name?.includes(proofKeywords.E.toLowerCase())) return proofKeywords.E;
+      return "unknown";
     });
 
     let isCorrectOrder = true;
-    for (let i = 0; i < Math.min(detectedOrder.length, expectedProofOrder.length); i++) {
+    for (
+      let i = 0;
+      i < Math.min(detectedOrder.length, expectedProofOrder.length);
+      i++
+    ) {
       if (detectedOrder[i] !== expectedProofOrder[i]) {
         isCorrectOrder = false;
         console.error(
-          `Incorrect proof at position ${i}: expected ${expectedProofOrder[i]}, got ${detectedOrder[i]}`,
+          `Incorrect proof at position ${i}: expected ${expectedProofOrder[i]}, got ${detectedOrder[i]}`
         );
       }
     }
 
     if (!isCorrectOrder) {
-      console.error("Proofs are not in the correct order. This may lead to verification failure.");
-      console.error("The proofs must follow this order:", expectedProofOrder.join(" → "));
+      console.error(
+        "Proofs are not in the correct order. This may lead to verification failure."
+      );
+      console.error(
+        "The proofs must follow this order:",
+        expectedProofOrder.join(" → ")
+      );
     } else {
       console.log("✓ Proofs are in the correct order");
     }
@@ -201,57 +233,71 @@ export class ZKPassportHelper {
    * @returns Promise resolving to contract proof data or undefined if an error occurs
    */
   public static async formatProofsForContract(
-    proofs: ProofResult[],
+    proofs: ProofResult[]
   ): Promise<ContractProofData | undefined> {
     try {
-      console.log("Starting formatProofsForContract with proofs:", proofs)
-      console.log("Number of proofs received:", proofs.length)
-      console.log("Proof names:", proofs.map((p: ProofResult) => p.name))
-  
+      console.log("Starting formatProofsForContract with proofs:", proofs);
+      console.log("Number of proofs received:", proofs.length);
+      console.log(
+        "Proof names:",
+        proofs.map((p: ProofResult) => p.name)
+      );
+
       // Validate number of proofs (updated to 5)
       if (proofs.length !== 5) {
-        console.error(`Incorrect number of proofs: expected 5, got ${proofs.length}`)
-        return undefined
+        console.error(
+          `Incorrect number of proofs: expected 5, got ${proofs.length}`
+        );
+        return undefined;
       }
 
       // Find proofs by keywords
-      const { proofA, proofB, proofC, proofD, proofE } = this.findProofsByKeywords(proofs)
-      
-      console.log("Found proofs:")
-      console.log("- proofA (DSC):", proofA?.name || "NOT FOUND")
-      console.log("- proofB (ID Data):", proofB?.name || "NOT FOUND")
-      console.log("- proofC (Integrity):", proofC?.name || "NOT FOUND")
-      console.log("- proofD (Disclosure):", proofD?.name || "NOT FOUND")
-      console.log("- proofE (Age):", proofE?.name || "NOT FOUND")
-  
+      const { proofA, proofB, proofC, proofD, proofE } =
+        this.findProofsByKeywords(proofs);
+
+      console.log("Found proofs:");
+      console.log("- proofA (DSC):", proofA?.name || "NOT FOUND");
+      console.log("- proofB (ID Data):", proofB?.name || "NOT FOUND");
+      console.log("- proofC (Integrity):", proofC?.name || "NOT FOUND");
+      console.log("- proofD (Disclosure):", proofD?.name || "NOT FOUND");
+      console.log("- proofE (Age):", proofE?.name || "NOT FOUND");
+
       // Check if all required proofs were found
       if (!proofA || !proofB || !proofC || !proofD || !proofE) {
-        this.logMissingProofs(proofA, proofB, proofC, proofD, proofE)
-        return undefined
+        this.logMissingProofs(proofA, proofB, proofC, proofD, proofE);
+        return undefined;
       }
 
       // Create filtered proofs array in the correct order
-      const filteredProofs = [proofA, proofB, proofC, proofD, proofE]
-      
+      const filteredProofs = [proofA, proofB, proofC, proofD, proofE];
+
       // Validate proof order
-      this.validateProofOrder(filteredProofs)
-  
+      this.validateProofOrder(filteredProofs);
+
       // Initialize circuit manifest
-      this.circuitManifest = await this.registryClient.getCircuitManifest(undefined, {
-        version: proofA.version,
-      })
-  
+      this.circuitManifest = await this.registryClient.getCircuitManifest(
+        undefined,
+        {
+          version: proofA.version,
+        }
+      );
+
       // Format all subcircuits (now with 5 proofs)
-      const formattedProofs = await this.formatAllSubCircuits(proofA, proofB, proofC, proofD, proofE)
-      
-      console.log("✓ All 5 proofs formatted successfully")
-      
+      const formattedProofs = await this.formatAllSubCircuits(
+        proofA,
+        proofB,
+        proofC,
+        proofD,
+        proofE
+      );
+
+      console.log("✓ All 5 proofs formatted successfully");
+
       // Create final contract data
-      return this.createContractProofData(formattedProofs)
-      
+      return this.createContractProofData(formattedProofs);
     } catch (error) {
-      this.logError("formatProofsForContract", error)
-      return undefined
+      this.logError("formatProofsForContract", error);
+      return undefined;
     }
   }
 
@@ -262,12 +308,12 @@ export class ZKPassportHelper {
     proofD: ProofResult | undefined,
     proofE: ProofResult | undefined
   ): void {
-    console.error("Missing required proofs:")
-    if (!proofA) console.error("- Missing DSC proof (Circuit A)")
-    if (!proofB) console.error("- Missing ID Data proof (Circuit B)")
-    if (!proofC) console.error("- Missing Integrity proof (Circuit C)")
-    if (!proofD) console.error("- Missing Disclosure proof (Circuit D)")
-    if (!proofE) console.error("- Missing Age proof (Circuit E)")
+    console.error("Missing required proofs:");
+    if (!proofA) console.error("- Missing DSC proof (Circuit A)");
+    if (!proofB) console.error("- Missing ID Data proof (Circuit B)");
+    if (!proofC) console.error("- Missing Integrity proof (Circuit C)");
+    if (!proofD) console.error("- Missing Disclosure proof (Circuit D)");
+    if (!proofE) console.error("- Missing Age proof (Circuit E)");
   }
 
   private static async formatAllSubCircuits(
@@ -277,49 +323,47 @@ export class ZKPassportHelper {
     proofD: ProofResult,
     proofE: ProofResult
   ) {
-    console.log("Formatting all 5 proofs...")
-    
-    console.log("Formatting proof A (DSC):", proofA.name)
-    const formattedProofA = await this.formatSubCircuit(proofA, "A")
+    console.log("Formatting all 5 proofs...");
 
-    console.log("Formatting proof B (ID Data):", proofB.name)
-    const formattedProofB = await this.formatSubCircuit(proofB, "B")
+    console.log("Formatting proof A (DSC):", proofA.name);
+    const formattedProofA = await this.formatSubCircuit(proofA, "A");
 
-    console.log("Formatting proof C (Integrity):", proofC.name)
-    const formattedProofC = await this.formatSubCircuit(proofC, "C")
+    console.log("Formatting proof B (ID Data):", proofB.name);
+    const formattedProofB = await this.formatSubCircuit(proofB, "B");
 
-    console.log("Formatting proof D (Disclosure):", proofD.name)
-    const formattedProofD = await this.formatSubCircuit(proofD, "D")
+    console.log("Formatting proof C (Integrity):", proofC.name);
+    const formattedProofC = await this.formatSubCircuit(proofC, "C");
 
-    console.log("Formatting proof E (Age):", proofE.name)
-    const formattedProofE = await this.formatSubCircuit(proofE, "E")
+    console.log("Formatting proof D (Disclosure):", proofD.name);
+    const formattedProofD = await this.formatSubCircuit(proofD, "D");
 
-    return { 
-      formattedProofA, 
-      formattedProofB, 
-      formattedProofC, 
-      formattedProofD, 
-      formattedProofE
-    }
+    console.log("Formatting proof E (Age):", proofE.name);
+    const formattedProofE = await this.formatSubCircuit(proofE, "E");
+
+    return {
+      formattedProofA,
+      formattedProofB,
+      formattedProofC,
+      formattedProofD,
+      formattedProofE,
+    };
   }
 
-  private static createContractProofData(
-    formattedProofs: {
-      formattedProofA: SubCircuitProof,
-      formattedProofB: SubCircuitProof,
-      formattedProofC: SubCircuitProof,
-      formattedProofD: SubCircuitProof,
-      formattedProofE: SubCircuitProof
-    }
-  ): ContractProofData {
-    const { 
-      formattedProofA, 
-      formattedProofB, 
-      formattedProofC, 
-      formattedProofD, 
-      formattedProofE
-    } = formattedProofs
-    
+  private static createContractProofData(formattedProofs: {
+    formattedProofA: SubCircuitProof;
+    formattedProofB: SubCircuitProof;
+    formattedProofC: SubCircuitProof;
+    formattedProofD: SubCircuitProof;
+    formattedProofE: SubCircuitProof;
+  }): ContractProofData {
+    const {
+      formattedProofA,
+      formattedProofB,
+      formattedProofC,
+      formattedProofD,
+      formattedProofE,
+    } = formattedProofs;
+
     return {
       vkeys: {
         vkey_a: formattedProofA.vkey,
@@ -349,7 +393,7 @@ export class ZKPassportHelper {
         input_d: formattedProofD.public_inputs,
         input_e: formattedProofE.public_inputs,
       },
-    }
+    };
   }
 
   /**
@@ -358,37 +402,47 @@ export class ZKPassportHelper {
    * @returns Promise resolving to an array of bigints representing the verification key or undefined
    */
   public static async getCircuitVerificationKey(
-    proofResult: ProofResult,
-  ): Promise<{vkeyFields: bigint[], vkeyHash: string} | undefined> {
+    proofResult: ProofResult
+  ): Promise<{ vkeyFields: bigint[]; vkeyHash: string } | undefined> {
     try {
-      this.validateProofResult(proofResult)
+      this.validateProofResult(proofResult);
 
-      const hostedPackagedCircuit = await this.registryClient.getPackagedCircuit(
-        proofResult.name!,
-        this.circuitManifest,
-      )
+      const hostedPackagedCircuit =
+        await this.registryClient.getPackagedCircuit(
+          proofResult.name!,
+          this.circuitManifest
+        );
 
       if (hostedPackagedCircuit && hostedPackagedCircuit.vkey) {
-        const vkeyUint8Array = this.base64ToUint8Array(hostedPackagedCircuit.vkey)
-        const vkeyFieldsString = ultraVkToFields(vkeyUint8Array)
+        const vkeyUint8Array = this.base64ToUint8Array(
+          hostedPackagedCircuit.vkey
+        );
+        const vkeyFieldsString = ultraVkToFields(vkeyUint8Array);
 
         const vkeyFields: bigint[] = vkeyFieldsString.map((f: string) =>
-          BigInt(f.startsWith("0x") ? f : "0x" + f),
-        )
+          BigInt(f.startsWith("0x") ? f : "0x" + f)
+        );
 
-        return {vkeyFields, vkeyHash: proofResult.vkeyHash!}
+        return { vkeyFields, vkeyHash: proofResult.vkeyHash! };
       }
 
-      return undefined
+      return undefined;
     } catch (error) {
-      this.logError("getCircuitVerificationKey", error)
-      return undefined
+      this.logError("getCircuitVerificationKey", error);
+      return undefined;
     }
   }
 
   private static validateProofResult(proofResult: ProofResult): void {
-    if (!proofResult.name || !proofResult.vkeyHash || !proofResult.version || !proofResult.proof) {
-      throw new Error("Missing required proof information (name, vkeyHash, version, or proof)")
+    if (
+      !proofResult.name ||
+      !proofResult.vkeyHash ||
+      !proofResult.version ||
+      !proofResult.proof
+    ) {
+      throw new Error(
+        "Missing required proof information (name, vkeyHash, version, or proof)"
+      );
     }
   }
 
@@ -400,26 +454,35 @@ export class ZKPassportHelper {
    */
   public static async formatSubCircuit(
     proofResult: ProofResult,
-    circuitType: CircuitType,
+    circuitType: CircuitType
   ): Promise<SubCircuitProof> {
     try {
-
       // Get the proof data
       const proofData = getProofData(
         proofResult.proof as string,
-        getNumberOfPublicInputs(proofResult.name!),
-      )
-      const formattedProofData = this.proofToBigIntArray(proofData.proof)
+        getNumberOfPublicInputs(proofResult.name!)
+      );
+      const formattedProofData = this.proofToBigIntArray(proofData.proof);
 
       // Get verification key
-      const fetchedVkey = await this.getCircuitVerificationKey(proofResult)
-      assert(fetchedVkey, "Failed to get verification key")
+      const fetchedVkey = await this.getCircuitVerificationKey(proofResult);
+      assert(fetchedVkey, "Failed to get verification key");
 
       // Extract public inputs and commitments based on circuit type
-      const { publicInputs, commitments } = this.extractCommitments(proofData, circuitType, proofResult.name)
+      const { publicInputs, commitments } = this.extractCommitments(
+        proofData,
+        circuitType,
+        proofResult.name
+      );
 
       // Validate all data
-      this.validateProofData(fetchedVkey.vkeyFields, formattedProofData, publicInputs, commitments, circuitType)
+      this.validateProofData(
+        fetchedVkey.vkeyFields,
+        formattedProofData,
+        publicInputs,
+        commitments,
+        circuitType
+      );
 
       return {
         vkey: fetchedVkey.vkeyFields,
@@ -427,68 +490,71 @@ export class ZKPassportHelper {
         public_inputs: publicInputs,
         vkey_hash: BigInt(fetchedVkey.vkeyHash),
         commitments: commitments,
-      }
+      };
     } catch (error) {
-      this.logError(`formatSubCircuit${circuitType}`, error)
-      throw new Error(`Failed to format SubCircuit${circuitType}: Invalid or missing data`)
+      this.logError(`formatSubCircuit${circuitType}`, error);
+      throw new Error(
+        `Failed to format SubCircuit${circuitType}: Invalid or missing data`
+      );
     }
   }
 
-
   private static proofToBigIntArray(proof: string[]): bigint[] {
     return proof.map((hexStr: string) => {
-      return BigInt(hexStr.startsWith("0x") ? hexStr : `0x${hexStr}`)
-    })
+      return BigInt(hexStr.startsWith("0x") ? hexStr : `0x${hexStr}`);
+    });
   }
 
   private static extractCommitments(
-    proofData: { proof: string[], publicInputs: string[] }, 
-    circuitType: CircuitType, 
+    proofData: { proof: string[]; publicInputs: string[] },
+    circuitType: CircuitType,
     proofName?: string
-  ): { publicInputs: bigint[], commitments: bigint[] } {
-    const publicInputs = this.proofToBigIntArray(proofData.publicInputs)
-    console.log("Public inputs: for proof", proofName, publicInputs)
+  ): { publicInputs: bigint[]; commitments: bigint[] } {
+    const publicInputs = this.proofToBigIntArray(proofData.publicInputs);
+    console.log("Public inputs: for proof", proofName, publicInputs);
 
-    let commitments: bigint[] = []
+    let commitments: bigint[] = [];
 
     try {
       switch (circuitType) {
         case "A": // DSC proof
-          const root = getMerkleRootFromDSCProof(proofData)
-          const commitment = getCommitmentFromDSCProof(proofData)
-          commitments = [root, commitment]
-          break
+          const root = getMerkleRootFromDSCProof(proofData);
+          const commitment = getCommitmentFromDSCProof(proofData);
+          commitments = [root, commitment];
+          break;
 
         case "B": // ID Data proof
-          const commitmentInB = getCommitmentInFromIDDataProof(proofData)
-          const commitmentOutB = getCommitmentOutFromIDDataProof(proofData)
-          commitments = [commitmentInB, commitmentOutB]
-          break
+          const commitmentInB = getCommitmentInFromIDDataProof(proofData);
+          const commitmentOutB = getCommitmentOutFromIDDataProof(proofData);
+          commitments = [commitmentInB, commitmentOutB];
+          break;
 
         case "C": // Integrity proof
-          const commitmentInC = getCommitmentInFromIntegrityProof(proofData)
-          const commitmentOutC = getCommitmentOutFromIntegrityProof(proofData)
-          commitments = [commitmentInC, commitmentOutC]
-          break
+          const commitmentInC = getCommitmentInFromIntegrityProof(proofData);
+          const commitmentOutC = getCommitmentOutFromIntegrityProof(proofData);
+          commitments = [commitmentInC, commitmentOutC];
+          break;
 
         case "D": // Disclosure proof (formerly E)
         case "E": // Age comparison proof (formerly F)
-          const commitmentInDE = getCommitmentInFromDisclosureProof(proofData)
-          const nullifierDE = getNullifierFromDisclosureProof(proofData)
-          commitments = [commitmentInDE, nullifierDE]
-          break
+          const commitmentInDE = getCommitmentInFromDisclosureProof(proofData);
+          const nullifierDE = getNullifierFromDisclosureProof(proofData);
+          commitments = [commitmentInDE, nullifierDE];
+          break;
       }
     } catch (extractionError) {
-      console.error(`Error extracting public inputs for SubCircuit${circuitType}:`, extractionError)
-      throw extractionError
+      console.error(
+        `Error extracting public inputs for SubCircuit${circuitType}:`,
+        extractionError
+      );
+      throw extractionError;
     }
 
-    return { publicInputs, commitments }
+    return { publicInputs, commitments };
   }
 
   public static base64ToUint8Array(base64: string): Uint8Array {
-    const buffer = Buffer.from(base64, "base64")
-    return new Uint8Array(buffer)
+    const buffer = Buffer.from(base64, "base64");
+    return new Uint8Array(buffer);
   }
-
 }
