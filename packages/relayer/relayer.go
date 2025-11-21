@@ -191,15 +191,15 @@ func NewConfigFromEnv() Config {
 	return Config{
 		SpyRPCHost:       getEnvOrDefault("SPY_RPC_HOST", "localhost:7073"),
 		SourceChainID:    uint16(getEnvIntOrDefault("SOURCE_CHAIN_ID", 56)),  // Aztec
-		DestChainID:      uint16(getEnvIntOrDefault("DEST_CHAIN_ID", 10003)), // Arbitrum Sepolia (TODO: verify this works)
+		DestChainID:      uint16(getEnvIntOrDefault("DEST_CHAIN_ID", 10003)), // Arbitrum Sepolia
 		WormholeContract: getEnvOrDefault("WORMHOLE_CONTRACT", "0x0848d2af89dfd7c0e171238f9216399e61e908cd31b0222a920f1bf621a16ed6"),
 		EmitterAddress:   getEnvOrDefault("EMITTER_ADDRESS", "0x0848d2af89dfd7c0e171238f9216399e61e908cd31b0222a920f1bf621a16ed6"),
 		// Needed when sending to Arbitrum
-		AztecWalletAddress:     getEnvOrDefault("AZTEC_WALLET_ADDRESS", "0x1f3933ca4d66e948ace5f8339e5da687993b76ee57bcf65e82596e0fc10a8859"),
 		ArbitrumRPCURL:         getEnvOrDefault("ARBITRUM_RPC_URL", "https://sepolia-rollup.arbitrum.io/rpc"),
 		PrivateKey:             getEnvOrDefault("PRIVATE_KEY", "0x0ff5c4c050588f4614255a5a4f800215b473e442ae9984347b3a727c3bb7ca55"),
 		ArbitrumTargetContract: getEnvOrDefault("ARBITRUM_TARGET_CONTRACT", "0x248EC2E5595480fF371031698ae3a4099b8dC229"),
 		// Needed when sending to Aztec
+		AztecWalletAddress:     getEnvOrDefault("AZTEC_WALLET_ADDRESS", "0x1f3933ca4d66e948ace5f8339e5da687993b76ee57bcf65e82596e0fc10a8859"),
 		AztecPXEURL:            getEnvOrDefault("AZTEC_PXE_URL", "http://localhost:8090"),
 		AztecTargetContract:    getEnvOrDefault("AZTEC_TARGET_CONTRACT", "0x0848d2af89dfd7c0e171238f9216399e61e908cd31b0222a920f1bf621a16ed6"),
 		VerificationServiceURL: getEnvOrDefault("VERIFICATION_SERVICE_URL", "http://localhost:8080"),
