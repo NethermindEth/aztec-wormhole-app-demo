@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -191,15 +192,15 @@ func NewConfigFromEnv() Config {
 	return Config{
 		SpyRPCHost:       getEnvOrDefault("SPY_RPC_HOST", "localhost:7073"),
 		SourceChainID:    uint16(getEnvIntOrDefault("SOURCE_CHAIN_ID", 56)),  // Aztec
-		DestChainID:      uint16(getEnvIntOrDefault("DEST_CHAIN_ID", 10003)), // Arbitrum Sepolia (TODO: verify this works)
+		DestChainID:      uint16(getEnvIntOrDefault("DEST_CHAIN_ID", 10003)), // Arbitrum Sepolia
 		WormholeContract: getEnvOrDefault("WORMHOLE_CONTRACT", "0x0848d2af89dfd7c0e171238f9216399e61e908cd31b0222a920f1bf621a16ed6"),
 		EmitterAddress:   getEnvOrDefault("EMITTER_ADDRESS", "0x0848d2af89dfd7c0e171238f9216399e61e908cd31b0222a920f1bf621a16ed6"),
 		// Needed when sending to Arbitrum
-		AztecWalletAddress:     getEnvOrDefault("AZTEC_WALLET_ADDRESS", "0x1f3933ca4d66e948ace5f8339e5da687993b76ee57bcf65e82596e0fc10a8859"),
 		ArbitrumRPCURL:         getEnvOrDefault("ARBITRUM_RPC_URL", "https://sepolia-rollup.arbitrum.io/rpc"),
 		PrivateKey:             getEnvOrDefault("PRIVATE_KEY", "0x0ff5c4c050588f4614255a5a4f800215b473e442ae9984347b3a727c3bb7ca55"),
 		ArbitrumTargetContract: getEnvOrDefault("ARBITRUM_TARGET_CONTRACT", "0x248EC2E5595480fF371031698ae3a4099b8dC229"),
 		// Needed when sending to Aztec
+		AztecWalletAddress:     getEnvOrDefault("AZTEC_WALLET_ADDRESS", "0x1f3933ca4d66e948ace5f8339e5da687993b76ee57bcf65e82596e0fc10a8859"),
 		AztecPXEURL:            getEnvOrDefault("AZTEC_PXE_URL", "http://localhost:8090"),
 		AztecTargetContract:    getEnvOrDefault("AZTEC_TARGET_CONTRACT", "0x0848d2af89dfd7c0e171238f9216399e61e908cd31b0222a920f1bf621a16ed6"),
 		VerificationServiceURL: getEnvOrDefault("VERIFICATION_SERVICE_URL", "http://localhost:8080"),
@@ -557,13 +558,21 @@ type Relayer struct {
 	config             Config
 	vaaProcessor       func(*Relayer, *VAAData) error
 	logger             *zap.Logger
+	// Protect against duplicate deliveries from the spy service (at-least-once semantics).
+	dedupeMu      sync.Mutex
+	inflightVAAs  map[string]struct{}
+	processedVAAs map[string]time.Time
+	dedupeTTL     time.Duration
 }
 
 // NewRelayer creates a new relayer instance
 func NewRelayer(config Config) (*Relayer, error) {
 	relayer := &Relayer{
-		config: config,
-		logger: logger.With(zap.String("component", "Relayer")),
+		config:        config,
+		logger:        logger.With(zap.String("component", "Relayer")),
+		inflightVAAs:  make(map[string]struct{}),
+		processedVAAs: make(map[string]time.Time),
+		dedupeTTL:     15 * time.Minute,
 	}
 
 	// Connect to the spy service
@@ -674,22 +683,32 @@ func (r *Relayer) Start(ctx context.Context) error {
 				continue
 			}
 
+			key := computeVAAKey(resp.VaaBytes)
+			if !r.beginProcessingVAA(key) {
+				r.logger.Debug("Skipping duplicate VAA", zap.String("vaaHash", key))
+				continue
+			}
+
 			// Process the VAA in a goroutine, but track it with the WaitGroupp
 			wg.Add(1)
-			go func(vaaBytes []byte) {
+			go func(vaaBytes []byte, dedupeKey string) {
 				defer wg.Done()
-				r.processVAA(processingCtx, vaaBytes)
-			}(resp.VaaBytes)
+				if err := r.processVAA(processingCtx, vaaBytes); err != nil {
+					r.finishProcessingVAA(dedupeKey, false)
+				} else {
+					r.finishProcessingVAA(dedupeKey, true)
+				}
+			}(resp.VaaBytes, key)
 		}
 	}
 }
 
-func (r *Relayer) processVAA(ctx context.Context, vaaBytes []byte) {
+func (r *Relayer) processVAA(ctx context.Context, vaaBytes []byte) error {
 	// Check for context cancellation first
 	select {
 	case <-ctx.Done():
 		r.logger.Debug("Processing cancelled for VAA")
-		return
+		return ctx.Err()
 	default:
 		// Continue processing
 	}
@@ -698,7 +717,7 @@ func (r *Relayer) processVAA(ctx context.Context, vaaBytes []byte) {
 	wormholeVAA, err := vaaLib.Unmarshal(vaaBytes)
 	if err != nil {
 		r.logger.Error("Failed to parse VAA", zap.Error(err))
-		return
+		return err
 	}
 
 	// Extract the txID from the payload (first 32 bytes)
@@ -730,7 +749,55 @@ func (r *Relayer) processVAA(ctx context.Context, vaaBytes []byte) {
 	// Use the passed context when calling the processor
 	if err := r.vaaProcessor(r, vaaData); err != nil {
 		r.logger.Error("Error processing VAA", zap.Error(err))
+		return err
 	}
+
+	return nil
+}
+
+func (r *Relayer) beginProcessingVAA(key string) bool {
+	r.dedupeMu.Lock()
+	defer r.dedupeMu.Unlock()
+
+	// Drop if we already processed this VAA recently—spy service can replay messages.
+	if ts, ok := r.processedVAAs[key]; ok {
+		if time.Since(ts) < r.dedupeTTL {
+			return false
+		}
+		delete(r.processedVAAs, key)
+	}
+
+	// Another goroutine is already working on this VAA; let it finish.
+	if _, ok := r.inflightVAAs[key]; ok {
+		return false
+	}
+
+	r.inflightVAAs[key] = struct{}{}
+	return true
+}
+
+func (r *Relayer) finishProcessingVAA(key string, success bool) {
+	r.dedupeMu.Lock()
+	defer r.dedupeMu.Unlock()
+
+	delete(r.inflightVAAs, key)
+
+	if success {
+		// Cache the completion timestamp so replays are ignored within the TTL window.
+		r.processedVAAs[key] = time.Now()
+	}
+
+	cutoff := time.Now().Add(-r.dedupeTTL)
+	for k, ts := range r.processedVAAs {
+		if ts.Before(cutoff) {
+			delete(r.processedVAAs, k)
+		}
+	}
+}
+
+func computeVAAKey(vaaBytes []byte) string {
+	hash := sha256.Sum256(vaaBytes)
+	return hex.EncodeToString(hash[:])
 }
 
 // MODIFY: defaultVAAProcessor to use verification service for Arbitrum->Aztec
