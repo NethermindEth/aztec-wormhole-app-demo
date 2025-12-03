@@ -9,7 +9,7 @@ pub contract ZKPassportCredentialEmitter {
             traits::{Deserialize, Serialize, FromField}
         }
     };
-    use dep::bb_proof_verification::verify_ultrahonkzk_proof;
+    // use dep::bb_proof_verification::verify_ultrahonkzk_proof;
     use dep::wormhole::Wormhole;
     use dep::token::Token;
 
@@ -67,44 +67,56 @@ pub contract ZKPassportCredentialEmitter {
         amount: u128, // amount of tokens to be donated on chosen chainID
         nonce: Field
     ) {
+        // ============================================================================
+        // MOCK MODE: ZKPassport proof verification disabled
+        // TODO: Uncomment the verify_ultrahonkzk_proof calls below once zkpassport
+        //       mobile app supports bb v3
+        // ============================================================================
+        
+        // Suppress unused variable warning while mocked
+        let _ = contractProofData;
+
         // 1. verify zk passport proofs (5 total) using BB UltraHonk verification
         // proof a,b have 2 public inputs
-        verify_ultrahonkzk_proof(
-            contractProofData.vkeys.vkey_a,
-            contractProofData.proofs.proof_a,
-            contractProofData.public_inputs.input_a,
-            contractProofData.vkey_hashes.vkey_hash_a
-        );
+        // verify_ultrahonkzk_proof(
+        //     contractProofData.vkeys.vkey_a,
+        //     contractProofData.proofs.proof_a,
+        //     contractProofData.public_inputs.input_a,
+        //     contractProofData.vkey_hashes.vkey_hash_a
+        // );
 
-        verify_ultrahonkzk_proof(
-            contractProofData.vkeys.vkey_b,
-            contractProofData.proofs.proof_b,
-            contractProofData.public_inputs.input_b,
-            contractProofData.vkey_hashes.vkey_hash_b
-        );
+        // verify_ultrahonkzk_proof(
+        //     contractProofData.vkeys.vkey_b,
+        //     contractProofData.proofs.proof_b,
+        //     contractProofData.public_inputs.input_b,
+        //     contractProofData.vkey_hashes.vkey_hash_b
+        // );
 
-        // proof c has 10 public inputs
-        verify_ultrahonkzk_proof(
-            contractProofData.vkeys.vkey_c,
-            contractProofData.proofs.proof_c,
-            contractProofData.public_inputs.input_c,
-            contractProofData.vkey_hashes.vkey_hash_c
-        );
+        // // proof c has 10 public inputs
+        // verify_ultrahonkzk_proof(
+        //     contractProofData.vkeys.vkey_c,
+        //     contractProofData.proofs.proof_c,
+        //     contractProofData.public_inputs.input_c,
+        //     contractProofData.vkey_hashes.vkey_hash_c
+        // );
 
-        // proof d,e have 5 public inputs
-        verify_ultrahonkzk_proof(
-            contractProofData.vkeys.vkey_d,
-            contractProofData.proofs.proof_d,
-            contractProofData.public_inputs.input_d,
-            contractProofData.vkey_hashes.vkey_hash_d
-        );
+        // // proof d,e have 5 public inputs
+        // verify_ultrahonkzk_proof(
+        //     contractProofData.vkeys.vkey_d,
+        //     contractProofData.proofs.proof_d,
+        //     contractProofData.public_inputs.input_d,
+        //     contractProofData.vkey_hashes.vkey_hash_d
+        // );
 
-        verify_ultrahonkzk_proof(
-            contractProofData.vkeys.vkey_e,
-            contractProofData.proofs.proof_e,
-            contractProofData.public_inputs.input_e,
-            contractProofData.vkey_hashes.vkey_hash_e
-        );
+        // verify_ultrahonkzk_proof(
+        //     contractProofData.vkeys.vkey_e,
+        //     contractProofData.proofs.proof_e,
+        //     contractProofData.public_inputs.input_e,
+        //     contractProofData.vkey_hashes.vkey_hash_e
+        // );
+        // ============================================================================
+        // END MOCK MODE
+        // ============================================================================
 
         let bridge_address = AztecAddress::from_field(0x254e2fb335400ee94944fdc64c983934b93827bcbcc2c8f4a5090daff6582dfc); // Receiver/bridge address for token transfers
 
