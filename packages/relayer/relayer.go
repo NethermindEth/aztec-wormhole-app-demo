@@ -439,6 +439,7 @@ type EVMClient struct {
 	privateKey *ecdsa.PrivateKey
 	address    common.Address
 	logger     *zap.Logger
+	nonceMutex sync.Mutex
 }
 
 // NewEVMClient creates a new client for EVM-compatible blockchains
@@ -483,6 +484,9 @@ func (c *EVMClient) GetAddress() common.Address {
 func (c *EVMClient) SendVerifyTransaction(ctx context.Context, targetContract string, vaaBytes []byte) (string, error) {
 	c.logger.Debug("Sending verify transaction to EVM", zap.Int("vaaLength", len(vaaBytes)))
 
+	c.nonceMutex.Lock()
+	defer c.nonceMutex.Unlock()
+
 	// Contract ABI for the verify function
 	const abiJSON = `[{
         "inputs": [
@@ -516,6 +520,8 @@ func (c *EVMClient) SendVerifyTransaction(ctx context.Context, targetContract st
 	if err != nil {
 		return "", fmt.Errorf("failed to get gas price: %v", err)
 	}
+
+	c.logger.Debug("Using nonce for transaction", zap.Uint64("nonce", nonce))
 
 	// Create the transaction
 	targetAddr := common.HexToAddress(targetContract)
