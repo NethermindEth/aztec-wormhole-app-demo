@@ -4,18 +4,21 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
-    "@aztec/accounts": "2.0.3",
-    "@aztec/aztec.js": "2.0.3",
-    "@aztec/noir-contracts.js": "2.0.3",
-    "@zkpassport/sdk": "0.10.0",
-    "@zkpassport/utils": "^0.25.3",
+    "@aztec/accounts": "3.0.0-devnet.5",
+    "@aztec/aztec.js": "3.0.0-devnet.5",
+    "@aztec/kv-store": "3.0.0-devnet.5",
+    "@aztec/noir-contracts.js": "3.0.0-devnet.5",
+    "@aztec/pxe": "3.0.0-devnet.5",
+    "@aztec/stdlib": "3.0.0-devnet.5",
+    "buffer": "^6.0.3",
     "next": "^16.0.0",
+    "process": "^0.11.10",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-qr-code": "^2.0.15",
@@ -25,10 +28,14 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/webpack": "^5.28.5",
+    "@zkpassport/sdk": "^0.11.0",
+    "@zkpassport/utils": "^0.30.0",
     "eslint": "^9.38.0",
     "eslint-config-next": "^16.0.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.19.2",
     "typescript": "^5"
   }
 }

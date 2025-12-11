@@ -1,7 +1,11 @@
 // src/deploy.mjs
-import { getInitialTestAccountsWallets } from '@aztec/accounts/testing';
-import { AztecAddress, Contract, createPXEClient, loadContractArtifact, waitForPXE } from '@aztec/aztec.js';
-import EmitterJSON from "../artifacts/emitter-ZKPassportCredentialEmitter.json" assert { type: "json" };
+import { getInitialTestAccountsWallets } from '../../../../scripts/utils/testAccounts.mjs';
+import { AztecAddress } from '@aztec/aztec.js/addresses';
+import { Contract } from '@aztec/aztec.js/contracts';
+import { loadContractArtifact } from '@aztec/aztec.js/abi';
+import { createPXEClient, waitForPXE } from '@aztec/aztec.js/pxe';
+import { createAztecNodeClient } from '@aztec/aztec.js/node';
+import EmitterJSON from "../artifacts/emitter-ZKPassportCredentialEmitter.json" with { type: "json" };
 
 import { writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -10,7 +14,7 @@ import { TokenContract } from '@aztec/noir-contracts.js/Token';
 
 const EmitterContractArtifact = loadContractArtifact(EmitterJSON);
 
-const { PXE_URL = 'http://localhost:8090' } = process.env;
+const { PXE_URL = 'https://devnet.aztec-labs.com', NODE_URL = PXE_URL } = process.env;
 
 
 // Call `aztec-nargo compile` to compile the contract
@@ -49,10 +53,11 @@ export async function mintTokensToPrivate(
 async function main() {
   const pxe = createPXEClient(PXE_URL);
   await waitForPXE(pxe);
+  const nodeClient = createAztecNodeClient(NODE_URL);
 
   console.log(`Connected to PXE at ${PXE_URL}`);
 
-  const [ownerWallet, receiverWallet] = await getInitialTestAccountsWallets(pxe);
+  const [ownerWallet, receiverWallet] = await getInitialTestAccountsWallets(pxe, nodeClient);
   const ownerAddress = ownerWallet.getAddress();
 
   console.log(`Owner address: ${ownerAddress}`);
@@ -62,8 +67,8 @@ async function main() {
   const __dirname = dirname(__filename);
 
   // EXISTING WORMHOLE AND TOKEN CONTRACT ADDRESSES
-  const wormhole_address = AztecAddress.fromString("0x1320a7c89797e4506b683fcc547acb7f02a809bd1b3a967a3dfe18b7d3f38669");
-  const token_address = "0x0dc025163fe73041b970e9a26905fb41358ad14ef8de84e38746679f210d300e";
+  const wormhole_address = AztecAddress.fromString("0x2b13cff4daef709134419f1506ccae28956e02102a5ef5f2d0077e4991a9f493");
+  const token_address = "0x063cb1ad6d818724574328352263cbc8ae38c8c3d5b1ae3e0c0dcc1e58d772ac";
 
   const emitter = await Contract.deploy(ownerWallet, EmitterContractArtifact, [AztecAddress.fromString(token_address)])
       .send()

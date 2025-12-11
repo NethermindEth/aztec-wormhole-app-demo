@@ -87,13 +87,13 @@ contract DeployVault is Script {
             wormholeAddress = 0xC89Ce4735882C9F0f0FE26686c53074E09B0D550;
             wormholeChainId = 10003;
             finality = 2;
-            aztecEmitter = 0x0f8a2300a7925c586135b1c142dc0b833f20d5c41ea6e815900d65d041e96cf5;
+            aztecEmitter = 0x0a375f918e880aec688661865f0c2281b8afab83eb29e443485debb041afa9da;
         } else if (block.chainid == 421614) {
             // Arbitrum Sepolia - can override via env vars
             wormholeAddress = vm.envOr("WORMHOLE_ADDRESS", address(0x6b9C8671cdDC8dEab9c719bB87cBd3e782bA6a35));
             wormholeChainId = uint16(vm.envOr("WORMHOLE_CHAIN_ID", uint256(10003)));
             finality = uint8(vm.envOr("FINALITY", uint256(2)));
-            aztecEmitter = vm.envOr("AZTEC_EMITTER_ADDRESS", bytes32(0x0f8a2300a7925c586135b1c142dc0b833f20d5c41ea6e815900d65d041e96cf5));
+            aztecEmitter = vm.envOr("AZTEC_EMITTER_ADDRESS", bytes32(0x0a375f918e880aec688661865f0c2281b8afab83eb29e443485debb041afa9da));
         } else {
             revert(string.concat("Unsupported chain ID: ", vm.toString(block.chainid), " (only local and testnet supported)"));
         }

@@ -12,7 +12,7 @@ This Next.js application demonstrates a complete donation flow that combines:
 
 ## Features
 
-- 🔐 **Zero-Knowledge Identity Verification**: Users prove their identity (age, citizenship, document type) without revealing personal data
+- 🔐 **Zero-Knowledge Identity Verification**: Users prove their identity (age, document type) without revealing personal data
 - 💝 **Verified Donations**: Make donations with cryptographic proof of identity
 - 🌉 **Cross-Chain Transfers**: Bridge tokens from Aztec to Arbitrum using Wormhole protocol
 - 📱 **QR Code Verification**: Scan QR codes with the ZKPassport mobile app for identity verification

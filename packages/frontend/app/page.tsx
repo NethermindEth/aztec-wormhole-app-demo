@@ -1,6 +1,8 @@
 "use client"
+// Import polyfills FIRST before any other imports
+import "./polyfills"
 import { useEffect, useRef, useState } from "react"
-import { ZKPassport, type ProofResult, EU_COUNTRIES, type QueryResult, type QueryResultErrors } from "@zkpassport/sdk"
+import { ZKPassport, type ProofResult, type QueryResult, type QueryResultErrors } from "@zkpassport/sdk"
 import QRCode from "react-qr-code"
 import { ZKPassportHelper, type ContractProofData } from "./ZKPassportHelper" // Adjust the import path as needed
 
@@ -81,13 +83,14 @@ export default function Home() {
       const queryBuilder = await zkPassportRef.current.request({
         name: "Obsidion Wallet",
         logo: window.location.origin + "/wallet-logo.png",
-        purpose: "Prove your personhood and EU citizenship to make a verified donation",
+        purpose: "Prove your personhood to make a verified donation",
         scope: serviceScope,
         mode: "fast",
         devMode: true,
       })
 
       // Build the query with your requirements
+      // This generates 5 proofs: A, B, C (automatic), E (disclose), F (age comparison)
       const { 
         url, 
         requestId,
@@ -98,7 +101,6 @@ export default function Home() {
         onReject, 
         onError 
       } = queryBuilder
-        .in("issuing_country", [...EU_COUNTRIES, "Zero Knowledge Republic"])
         .disclose("firstname")
         .gte("age", 18)
         .disclose("document_type")
@@ -157,7 +159,6 @@ export default function Home() {
 
         // Extract data from results (only for sending to API, not for display)
         const firstName = result?.firstname?.disclose?.result || ""
-        const isEUCitizen = result?.issuing_country?.in?.result || false
         const isOver18 = result?.age?.gte?.result || false
         const documentType = result?.document_type?.disclose?.result || ""
         
@@ -194,20 +195,18 @@ export default function Home() {
         // Convert BigInt values to strings for JSON serialization
         const serializableProofData = contractProofData ? {
           vkeys: {
-            vkey_a: contractProofData.vkeys.vkey_a.map(v => v.toString()),
-            vkey_b: contractProofData.vkeys.vkey_b.map(v => v.toString()),
-            vkey_c: contractProofData.vkeys.vkey_c.map(v => v.toString()),
-            vkey_d: contractProofData.vkeys.vkey_d.map(v => v.toString()),
-            vkey_e: contractProofData.vkeys.vkey_e.map(v => v.toString()),
-            vkey_f: contractProofData.vkeys.vkey_f.map(v => v.toString()),
+            vkey_a: contractProofData.vkeys.vkey_a.map((v: bigint) => v.toString()),
+            vkey_b: contractProofData.vkeys.vkey_b.map((v: bigint) => v.toString()),
+            vkey_c: contractProofData.vkeys.vkey_c.map((v: bigint) => v.toString()),
+            vkey_d: contractProofData.vkeys.vkey_d.map((v: bigint) => v.toString()),
+            vkey_e: contractProofData.vkeys.vkey_e.map((v: bigint) => v.toString()),
           },
           proofs: {
-            proof_a: contractProofData.proofs.proof_a.map(p => p.toString()),
-            proof_b: contractProofData.proofs.proof_b.map(p => p.toString()),
-            proof_c: contractProofData.proofs.proof_c.map(p => p.toString()),
-            proof_d: contractProofData.proofs.proof_d.map(p => p.toString()),
-            proof_e: contractProofData.proofs.proof_e.map(p => p.toString()),
-            proof_f: contractProofData.proofs.proof_f.map(p => p.toString()),
+            proof_a: contractProofData.proofs.proof_a.map((p: bigint) => p.toString()),
+            proof_b: contractProofData.proofs.proof_b.map((p: bigint) => p.toString()),
+            proof_c: contractProofData.proofs.proof_c.map((p: bigint) => p.toString()),
+            proof_d: contractProofData.proofs.proof_d.map((p: bigint) => p.toString()),
+            proof_e: contractProofData.proofs.proof_e.map((p: bigint) => p.toString()),
           },
           vkey_hashes: {
             vkey_hash_a: contractProofData.vkey_hashes.vkey_hash_a.toString(),
@@ -215,15 +214,13 @@ export default function Home() {
             vkey_hash_c: contractProofData.vkey_hashes.vkey_hash_c.toString(),
             vkey_hash_d: contractProofData.vkey_hashes.vkey_hash_d.toString(),
             vkey_hash_e: contractProofData.vkey_hashes.vkey_hash_e.toString(),
-            vkey_hash_f: contractProofData.vkey_hashes.vkey_hash_f.toString(),
           },
           public_inputs: {
-            input_a: contractProofData.public_inputs.input_a.map(i => i.toString()),
-            input_b: contractProofData.public_inputs.input_b.map(i => i.toString()),
-            input_c: contractProofData.public_inputs.input_c.map(i => i.toString()),
-            input_d: contractProofData.public_inputs.input_d.map(i => i.toString()),
-            input_e: contractProofData.public_inputs.input_e.map(i => i.toString()),
-            input_f: contractProofData.public_inputs.input_f.map(i => i.toString()),
+            input_a: contractProofData.public_inputs.input_a.map((i: bigint) => i.toString()),
+            input_b: contractProofData.public_inputs.input_b.map((i: bigint) => i.toString()),
+            input_c: contractProofData.public_inputs.input_c.map((i: bigint) => i.toString()),
+            input_d: contractProofData.public_inputs.input_d.map((i: bigint) => i.toString()),
+            input_e: contractProofData.public_inputs.input_e.map((i: bigint) => i.toString()),
           },
         } : null;
 
@@ -234,7 +231,6 @@ export default function Home() {
         const verificationData = {
           firstName: firstName,
           isOver18: isOver18,
-          isEUCitizen: isEUCitizen,
           documentType: documentType,
           uniqueIdentifier: uniqueIdentifier || "",
           amount: finalDonationAmount, // Use the locked amount

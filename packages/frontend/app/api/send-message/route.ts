@@ -4,6 +4,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 
 const execPromise = promisify(exec);
 
@@ -41,8 +42,6 @@ export async function POST(request: NextRequest) {
         })
       );
       
-      const encodedData = Buffer.from(JSON.stringify(safeVerificationData)).toString('base64');
-      
       // Path to your existing script
       const scriptPath = path.join(process.cwd(), '/app/scripts/send-message.mjs');
       
@@ -56,66 +55,94 @@ export async function POST(request: NextRequest) {
       }
       
       try {
+        let tempDir: string | null = null;
+        let dataPath: string | null = null;
+
+        // Use npx tsx to execute the script to handle ESM imports properly
+        // tsx is a TypeScript/ESM executor that resolves module imports correctly
+        const command = `npx tsx ${scriptPath}`;
+        
+        console.log(`Executing script with command: ${command}`);
+        
         // Execute your script with the verification data as an environment variable
-        const { stdout, stderr } = await execPromise(`node ${scriptPath}`, {
-          timeout: 120000, // 2 minute timeout
-          env: {
-            ...process.env,
-            VERIFICATION_DATA: encodedData,
-            HAS_MEANINGFUL_DATA: "true",
-            HAS_ZK_PROOFS: hasProofs ? "true" : "false"
+        try {
+          tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'aztec-wormhole-'));
+          dataPath = path.join(tempDir, 'verification-data.json');
+          await fs.promises.writeFile(dataPath, JSON.stringify(safeVerificationData));
+
+          if (!dataPath) {
+            throw new Error('Failed to prepare verification data for script execution');
           }
-        });
-        
-        if (stderr && !stderr.includes("deprecated in import statements")) {
-          console.warn("Script warnings:", stderr);
-        }
-        
-        // Check for different transaction hash formats
-        const newTxHashMatch = stdout.match(/hash: Fr<(0x[0-9a-fA-F]+)>/);
-        const oldTxHashMatch = stdout.match(/Transaction sent! Hash: (0x[0-9a-fA-F]+)/);
-        const anyTxHashMatch = stdout.match(/(0x[0-9a-fA-F]{64})/);
-        
-        let txHash;
-        if (newTxHashMatch && newTxHashMatch[1]) {
-          txHash = newTxHashMatch[1];
-        } else if (oldTxHashMatch && oldTxHashMatch[1]) {
-          txHash = oldTxHashMatch[1];
-        } else if (anyTxHashMatch && anyTxHashMatch[1]) {
-          txHash = anyTxHashMatch[1];
-        }
-        
-        if (txHash) {
-          return NextResponse.json({
-            success: true,
-            txHash: txHash,
-            message: hasProofs 
-              ? "Verification data and ZK proofs sent to contract successfully" 
-              : "Verification data sent to contract successfully",
-            hasZKProofs: hasProofs
+
+          const envVars = { ...process.env };
+          delete envVars.VERIFICATION_DATA;
+          delete envVars.VERIFICATION_DATA_PATH;
+          delete envVars.VERIFICATION_DATA_BASE64;
+
+          envVars.VERIFICATION_DATA_PATH = dataPath;
+          envVars.HAS_MEANINGFUL_DATA = "true";
+          envVars.HAS_ZK_PROOFS = hasProofs ? "true" : "false";
+
+          const { stdout, stderr } = await execPromise(command, {
+            timeout: 120000, // 2 minute timeout
+            env: envVars
           });
-        } else {
-          // If we can't find a transaction hash but the script completed successfully
-          if (stdout.includes("Calling emitter verify and publish") && 
-              stdout.includes("blockNumber:")) {
-            return NextResponse.json({
-              success: true,
-              message: hasProofs 
-                ? "Verification and ZK proofs sent successfully, but transaction hash could not be extracted"
-                : "Verification sent successfully, but transaction hash could not be extracted",
-              rawOutput: stdout.substring(stdout.length - 500),
-              hasZKProofs: hasProofs
-            });
+          
+          if (stderr && !stderr.includes("deprecated in import statements")) {
+            console.warn("Script warnings:", stderr);
           }
           
-          console.error("Could not find transaction hash in output");
-          return NextResponse.json({
-            success: false,
-            error: "Could not extract transaction hash from output",
-            rawOutput: stdout.substring(stdout.length - 500),
-            hasZKProofs: hasProofs
-          }, { status: 500 });
+          // Check for different transaction hash formats
+          const newTxHashMatch = stdout.match(/hash: Fr<(0x[0-9a-fA-F]+)>/);
+          const oldTxHashMatch = stdout.match(/Transaction sent! Hash: (0x[0-9a-fA-F]+)/);
+          const anyTxHashMatch = stdout.match(/(0x[0-9a-fA-F]{64})/);
+          
+          let txHash;
+          if (newTxHashMatch && newTxHashMatch[1]) {
+            txHash = newTxHashMatch[1];
+          } else if (oldTxHashMatch && oldTxHashMatch[1]) {
+            txHash = oldTxHashMatch[1];
+          } else if (anyTxHashMatch && anyTxHashMatch[1]) {
+            txHash = anyTxHashMatch[1];
+          }
+          
+          if (txHash) {
+            return NextResponse.json({
+              success: true,
+              txHash: txHash,
+              message: hasProofs 
+                ? "Verification data and ZK proofs sent to contract successfully" 
+                : "Verification data sent to contract successfully",
+              hasZKProofs: hasProofs
+            });
+          } else {
+            // If we can't find a transaction hash but the script completed successfully
+            if (stdout.includes("Calling emitter verify and publish") && 
+                stdout.includes("blockNumber:")) {
+              return NextResponse.json({
+                success: true,
+                message: hasProofs 
+                  ? "Verification and ZK proofs sent successfully, but transaction hash could not be extracted"
+                  : "Verification sent successfully, but transaction hash could not be extracted",
+                rawOutput: stdout.substring(stdout.length - 500),
+                hasZKProofs: hasProofs
+              });
+            }
+            
+            console.error("Could not find transaction hash in output");
+            return NextResponse.json({
+              success: false,
+              error: "Could not extract transaction hash from output",
+              rawOutput: stdout.substring(stdout.length - 500),
+              hasZKProofs: hasProofs
+            }, { status: 500 });
+          }
+        } finally {
+          if (tempDir) {
+            await fs.promises.rm(tempDir, { recursive: true, force: true }).catch(() => {});
+          }
         }
+        
       } catch (error) {
         console.error("Error executing script:", error);
         let errorMessage = "Unknown error";

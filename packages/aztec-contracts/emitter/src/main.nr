@@ -3,36 +3,33 @@ use dep::aztec::macros::aztec;
 #[aztec]
 pub contract ZKPassportCredentialEmitter {
     use dep::aztec::{
-        macros::{
-            functions::private,
-        }, 
+        macros::functions::external,
         protocol_types::{
             address::AztecAddress,
             traits::{Deserialize, Serialize, FromField}
         }
     };
-    use dep::std;
+    // use dep::bb_proof_verification::verify_ultrahonkzk_proof;
     use dep::wormhole::Wormhole;
     use dep::token::Token;
 
+    // Nested structs for better organization (works with BB UltraHonk verification)
     #[derive(Serialize, Deserialize)]
     struct vkeys {
-        vkey_a: [Field; 128],
-        vkey_b: [Field; 128],
-        vkey_c: [Field; 128],
-        vkey_d: [Field; 128],
-        vkey_e: [Field; 128],
-        vkey_f: [Field; 128],
+        vkey_a: [Field; 115],
+        vkey_b: [Field; 115],
+        vkey_c: [Field; 115],
+        vkey_d: [Field; 115],
+        vkey_e: [Field; 115],
     }
 
     #[derive(Serialize, Deserialize)]
     struct proofs {
-        proof_a: [Field; 456],
-        proof_b: [Field; 456],
-        proof_c: [Field; 456],
-        proof_d: [Field; 456],
-        proof_e: [Field; 456],
-        proof_f: [Field; 456],
+        proof_a: [Field; 508],
+        proof_b: [Field; 508],
+        proof_c: [Field; 508],
+        proof_d: [Field; 508],
+        proof_e: [Field; 508],
     }
 
     #[derive(Serialize, Deserialize)]
@@ -42,7 +39,6 @@ pub contract ZKPassportCredentialEmitter {
         input_c: [Field; 10],
         input_d: [Field; 5],
         input_e: [Field; 5],
-        input_f: [Field; 5],
     }
 
     #[derive(Serialize, Deserialize)]
@@ -52,7 +48,6 @@ pub contract ZKPassportCredentialEmitter {
         vkey_hash_c: Field,
         vkey_hash_d: Field,
         vkey_hash_e: Field,
-        vkey_hash_f: Field,
     }
 
     #[derive(Serialize, Deserialize)]
@@ -63,7 +58,7 @@ pub contract ZKPassportCredentialEmitter {
         public_inputs: public_inputs,
     }
 
-    #[private]
+    #[external("private")]
     fn verify_and_publish(
         contractProofData: ContractProofData,
         msg: [[u8;31];7], // Format: [zkDonation Arb Address, Arb chain ID, msg1, msg2, msg3, msg4, msg5]
@@ -72,63 +67,62 @@ pub contract ZKPassportCredentialEmitter {
         amount: u128, // amount of tokens to be donated on chosen chainID
         nonce: Field
     ) {
-        // 1. verify zk passport proofs
-        // proof a,b has 2 public inputs
-        std::verify_proof_with_type(
-            contractProofData.vkeys.vkey_a,
-            contractProofData.proofs.proof_a,
-            contractProofData.public_inputs.input_a,
-            contractProofData.vkey_hashes.vkey_hash_a,
-            1
-        );
+        // ============================================================================
+        // MOCK MODE: ZKPassport proof verification disabled
+        // TODO: Uncomment the verify_ultrahonkzk_proof calls below once zkpassport
+        //       mobile app supports bb v3
+        // ============================================================================
+        
+        // Suppress unused variable warning while mocked
+        let _ = contractProofData;
 
-        std::verify_proof_with_type(
-            contractProofData.vkeys.vkey_b,
-            contractProofData.proofs.proof_b,
-            contractProofData.public_inputs.input_b,
-            contractProofData.vkey_hashes.vkey_hash_b,
-            1
-        );
+        // 1. verify zk passport proofs (5 total) using BB UltraHonk verification
+        // proof a,b have 2 public inputs
+        // verify_ultrahonkzk_proof(
+        //     contractProofData.vkeys.vkey_a,
+        //     contractProofData.proofs.proof_a,
+        //     contractProofData.public_inputs.input_a,
+        //     contractProofData.vkey_hashes.vkey_hash_a
+        // );
 
-        // proof c has 10 public inputs
-        std::verify_proof_with_type(
-            contractProofData.vkeys.vkey_c,
-            contractProofData.proofs.proof_c,
-            contractProofData.public_inputs.input_c,
-            contractProofData.vkey_hashes.vkey_hash_c,
-            1
-        );
+        // verify_ultrahonkzk_proof(
+        //     contractProofData.vkeys.vkey_b,
+        //     contractProofData.proofs.proof_b,
+        //     contractProofData.public_inputs.input_b,
+        //     contractProofData.vkey_hashes.vkey_hash_b
+        // );
 
-        // proof d,e,f have 5 public inputs
-        std::verify_proof_with_type(
-            contractProofData.vkeys.vkey_d,
-            contractProofData.proofs.proof_d,
-            contractProofData.public_inputs.input_d,
-            contractProofData.vkey_hashes.vkey_hash_d,
-            1
-        );
+        // // proof c has 10 public inputs
+        // verify_ultrahonkzk_proof(
+        //     contractProofData.vkeys.vkey_c,
+        //     contractProofData.proofs.proof_c,
+        //     contractProofData.public_inputs.input_c,
+        //     contractProofData.vkey_hashes.vkey_hash_c
+        // );
 
-        std::verify_proof_with_type(
-            contractProofData.vkeys.vkey_e,
-            contractProofData.proofs.proof_e,
-            contractProofData.public_inputs.input_e,
-            contractProofData.vkey_hashes.vkey_hash_e,
-            1
-        );
+        // // proof d,e have 5 public inputs
+        // verify_ultrahonkzk_proof(
+        //     contractProofData.vkeys.vkey_d,
+        //     contractProofData.proofs.proof_d,
+        //     contractProofData.public_inputs.input_d,
+        //     contractProofData.vkey_hashes.vkey_hash_d
+        // );
 
-        std::verify_proof_with_type(
-            contractProofData.vkeys.vkey_f,
-            contractProofData.proofs.proof_f,
-            contractProofData.public_inputs.input_f,
-            contractProofData.vkey_hashes.vkey_hash_f,
-            1
-        );
+        // verify_ultrahonkzk_proof(
+        //     contractProofData.vkeys.vkey_e,
+        //     contractProofData.proofs.proof_e,
+        //     contractProofData.public_inputs.input_e,
+        //     contractProofData.vkey_hashes.vkey_hash_e
+        // );
+        // ============================================================================
+        // END MOCK MODE
+        // ============================================================================
 
-        let bridge_address = AztecAddress::from_field(0x0d071eec273fa0c82825d9c5d2096965a40bcc33ae942714cf6c683af9632504); // TODO: confirm address, rename variable, remove hardcoding
+        let bridge_address = AztecAddress::from_field(0x254e2fb335400ee94944fdc64c983934b93827bcbcc2c8f4a5090daff6582dfc); // Receiver/bridge address for token transfers
 
         // 2. Perform zk Donation
         let _ = Token::at(token_address).transfer_in_private(
-            context.msg_sender(),
+            context.msg_sender().unwrap(),
             bridge_address, // should be set to the bridge address but for demo purposes the user can supply it
             amount,
             nonce
@@ -145,17 +139,24 @@ pub contract ZKPassportCredentialEmitter {
         let payload3: [u8; 31] = amount_field.to_le_bytes();
 
         // Payload Field 4-8: Message
-        // The message is already in the format of 5 u8s, so we can directly use it
-        let wormhole_payload = [msg[0], msg[1], payload3, msg[2], msg[3], msg[4], msg[5], msg[6]];
+        // The message is already in the format of 7 u8s (msg[0] through msg[6])
+        // Wormhole payload: [msg[0], msg[1], payload3, msg[2], msg[3], msg[4], msg[5], msg[6]]
                 
-        // 4. call publish message
-        // Wormhole signature: fn publish_message_in_private(nonce: u64, payloads: [[u8; 31]; 8], message_fee: u128, consistency: u8, from: AztecAddress, token_nonce: Field)
-        let _ = Wormhole::at(wormhole_address).publish_message_in_private(
+        // 4. call publish message with flat signature
+        // Wormhole signature: fn publish_message_in_private_flat(nonce: u64, payload_1-8: [u8; 31], message_fee: u128, consistency: u8, from: AztecAddress, token_nonce: Field)
+        let _ = Wormhole::at(wormhole_address).publish_message_in_private_flat(
             1, // nonce: u64
-            wormhole_payload, // payloads: [[u8; 31]; 8]
-            2, // message_fee: u128
+            msg[0], // payload_1: [u8; 31]
+            msg[1], // payload_2: [u8; 31]
+            payload3, // payload_3: [u8; 31] (amount)
+            msg[2], // payload_4: [u8; 31]
+            msg[3], // payload_5: [u8; 31]
+            msg[4], // payload_6: [u8; 31]
+            msg[5], // payload_7: [u8; 31]
+            msg[6], // payload_8: [u8; 31]
+            0, // message_fee: u128
             2, // consistency: u8
-            context.msg_sender(), // from: AztecAddress
+            context.msg_sender().unwrap(), // from: AztecAddress
             nonce, // token_nonce: Field
         ).call(&mut context);
     }
